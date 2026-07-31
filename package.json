@@ -1,0 +1,23 @@
+{
+  "name": "banking-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    
+    "auth-service": "npm run dev --prefix backend/auth-service",
+    "gateway": "npm run dev --prefix backend/gateway",
+    "offers-service": "npm run dev --prefix backend/offers-service",
+    "services-service": "npm run dev --prefix backend/services-service",
+    "frontend": "npm run start --prefix frontend",
+    "dev": "concurrently \"npm run auth-service\" \"npm run gateway\" \"npm run offers-service\" \"npm run services-service\" \"npm run frontend\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^10.0.4"
+  }
+}

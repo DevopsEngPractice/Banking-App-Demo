@@ -1,0 +1,101 @@
+:root {
+  --bank-primary: #0d3b66;
+  --bank-primary-dark: #082744;
+  --bank-accent: #f4a300;
+  --bank-light: #f7f9fb;
+}
+
+body {
+  background-color: var(--bank-light);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.navbar-bank {
+  background-color: var(--bank-primary);
+}
+
+.btn-bank-primary {
+  background-color: var(--bank-primary);
+  border-color: var(--bank-primary);
+  color: #fff;
+}
+.btn-bank-primary:hover {
+  background-color: var(--bank-primary-dark);
+  border-color: var(--bank-primary-dark);
+  color: #fff;
+}
+
+.btn-bank-accent {
+  background-color: var(--bank-accent);
+  border-color: var(--bank-accent);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.btn-bank-accent:hover {
+  background-color: #d98f00;
+  border-color: #d98f00;
+  color: #1a1a1a;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, var(--bank-primary) 0%, #14548f 100%);
+  color: #fff;
+  padding: 4rem 0;
+}
+
+.card-offer, .card-service {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+.card-offer:hover, .card-service:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: rgba(13, 59, 102, 0.1);
+  color: var(--bank-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.badge-role-admin { background-color: #7c3aed; }
+.badge-role-employee { background-color: #0d9488; }
+.badge-role-user { background-color: #2563eb; }
+
+.dashboard-sidebar {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  min-height: calc(100vh - 200px);
+}
+
+.dashboard-sidebar .nav-link {
+  color: #333;
+  border-radius: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.dashboard-sidebar .nav-link.active {
+  background-color: var(--bank-primary);
+  color: #fff;
+}
+
+footer.bank-footer {
+  background-color: var(--bank-primary-dark);
+  color: #dbe6f0;
+}
+
+.auth-card {
+  max-width: 460px;
+  margin: 3rem auto;
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+}
