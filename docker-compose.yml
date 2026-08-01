@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+
+  auth-service:
+    image: banking-app-auth-service:v1.0.0
+    build:
+      context: ./backend/auth-service
+    container_name: auth-service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./backend/auth-service/.env
+    restart: unless-stopped
+
+  gateway:
+    image: banking-app-api-gateway:v1.0.0
+    build:
+      context: ./backend/gateway
+    container_name: api-gateway
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/gateway/.env
+    depends_on:
+      - auth-service
+      - offers-service
+      - services-service
+    restart: unless-stopped
+
+  offers-service:
+    image: banking-app-offers-service:v1.0.0
+    build:
+      context: ./backend/offers-service
+    container_name: offers-service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./backend/offers-service/.env
+    restart: unless-stopped
+
+  services-service:
+    image: banking-app-services-service:v1.0.0
+    build:
+      context: ./backend/services-service
+    container_name: services-service
+    ports:
+      - "5003:5003"
+    env_file:
+      - ./backend/services-service/.env
+    restart: unless-stopped
+
+  frontend:
+    image: banking-app-frontend:v1.0.0
+    build:
+      context: ./frontend
+    container_name: banking-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - gateway
+    restart: unless-stopped
