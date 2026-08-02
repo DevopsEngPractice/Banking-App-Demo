@@ -103,7 +103,27 @@ pipeline {
                 docker images bankingsvc/*
                '''
             }
-        }        
+        }      
+
+        stage('Docker Login Test') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'USER',
+                        passwordVariable: 'PASS'
+                    )
+                ]) {
+
+                    bat '''
+                    echo Username=%USER%
+                    echo Password Length:
+                    echo %PASS% | find /v "" /c
+                    '''
+
+                }
+            }
+        }          
 
         stage('Docker Login') {
             steps {
