@@ -3,7 +3,7 @@ version: "3.9"
 services:
 
   auth-service:
-    image: banking-app-auth-service:v1.0.0
+    image: bankingsvc/banking-app-auth-service:v1.0.0
     build:
       context: ./backend/auth-service
     container_name: auth-service
@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: banking-app-api-gateway:v1.0.0
+    image: bankingsvc/banking-app-api-gateway:v1.0.0
     build:
       context: ./backend/gateway
     container_name: api-gateway
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
 
   offers-service:
-    image: banking-app-offers-service:v1.0.0
+    image: bankingsvc/banking-app-offers-service:v1.0.0
     build:
       context: ./backend/offers-service
     container_name: offers-service
@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
 
   services-service:
-    image: banking-app-services-service:v1.0.0
+    image: bankingsvc/banking-app-services-service:v1.0.0
     build:
       context: ./backend/services-service
     container_name: services-service
@@ -51,7 +51,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: banking-app-frontend:v1.0.0
+    image: bankingsvc/banking-app-frontend:v1.0.0
     build:
       context: ./frontend
     container_name: banking-ui
