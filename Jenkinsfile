@@ -138,7 +138,10 @@ pipeline {
                 ]) {
 
                     bat '''
-                    echo %PASS% | docker login -u %USER% --password-stdin
+                    docker logout
+                    echo %PASS% | docker login --username %USER% --password-stdin
+
+                    docker info
                     '''
 
                 }
