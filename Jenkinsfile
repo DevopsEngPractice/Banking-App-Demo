@@ -25,14 +25,14 @@ pipeline {
 
                 string(credentialsId: 'SERVICES_MONGO_URI', variable: 'SERVICES_DB'),
 
-                string(credentialsId: 'JWT_SECRET', variable: 'JWT')
+                string(credentialsId: 'AUTH_JWT_SECRET', variable: 'JWT')
 
             ]) {
 
                 writeFile file: 'backend/auth-service/.env', text: """
                 PORT=5001
                 MONGO_URI=${AUTH_DB}
-                JWT_SECRET=${JWT}
+                AUTH_JWT_SECRET=${JWT}
                 JWT_EXPIRES_IN=1d
                 CLIENT_URL=http://localhost:3000
                 """
@@ -48,7 +48,7 @@ pipeline {
                 writeFile file: 'backend/offers-service/.env', text: """
                 PORT=5002
                 MONGO_URI=${OFFERS_DB}
-                JWT_SECRET=${JWT}
+                AUTH_JWT_SECRET=${JWT}
                 CLIENT_URL=http://localhost:3000
                 """
 
