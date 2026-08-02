@@ -105,6 +105,26 @@ pipeline {
             }
         }      
 
+        // stage('Docker Login Test') {
+        //     steps {
+        //         withCredentials([
+        //             usernamePassword(
+        //                 credentialsId: 'dockerhub-creds',
+        //                 usernameVariable: 'USER',
+        //                 passwordVariable: 'PASS'
+        //             )
+        //         ]) {
+
+        //             bat '''
+        //             echo Username=%USER%
+        //             echo %PASS% > pass.txt
+        //             type > pass.txt
+        //             '''
+
+        //         }
+        //     }
+        // }          
+
         stage('Docker Login Test') {
             steps {
                 withCredentials([
@@ -114,16 +134,13 @@ pipeline {
                         passwordVariable: 'PASS'
                     )
                 ]) {
-
                     bat '''
                     echo Username=%USER%
-                    echo %PASS% > pass.txt
-                    type > pass.txt
+                    echo Password Received
                     '''
-
                 }
             }
-        }          
+        }
 
         stage('Docker Login') {
             steps {
@@ -138,16 +155,36 @@ pipeline {
                 ]) {
 
                     bat '''
-                    echo USER=%USER%
-                    docker logout
-                    
                     @echo off
-                    echo|set /p=%PASS% | docker login -u %USER% --password-stdin
-                    
+
+                    echo ===============================
+                    echo Docker Login Stage
+                    echo ===============================
+
+                    echo Username: %USER%
+
+                    echo %PASS%>dockerpass.txt
+
+                    docker logout
+
+                    docker login -u %USER% --password-stdin < dockerpass.txt
+
                     if %ERRORLEVEL% neq 0 (
-                        echo LOGIN FAILED
+                        echo.
+                        echo *********************************
+                        echo Docker Login FAILED
+                        echo *********************************
+                        del dockerpass.txt
                         exit /b 1
                     )
+
+                    del dockerpass.txt
+
+                    echo.
+                    echo *********************************
+                    echo Docker Login Successful
+                    echo *********************************
+
                     docker info
                     '''
 
