@@ -117,8 +117,8 @@ pipeline {
 
                     bat '''
                     echo Username=%USER%
-                    echo Password Length:
-                    echo %PASS% | find /v "" /c
+                    echo %PASS% > pass.txt
+                    type > pass.txt
                     '''
 
                 }
@@ -138,9 +138,16 @@ pipeline {
                 ]) {
 
                     bat '''
+                    echo USER=%USER%
                     docker logout
-                    echo %PASS% | docker login --username %USER% --password-stdin
-
+                    
+                    @echo off
+                    echo|set /p=%PASS% | docker login -u %USER% --password-stdin
+                    
+                    if %ERRORLEVEL% neq 0 (
+                        echo LOGIN FAILED
+                        exit /b 1
+                    )
                     docker info
                     '''
 
