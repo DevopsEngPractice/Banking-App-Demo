@@ -11,7 +11,7 @@ pipeline {
 
             steps {
                 echo 'Checking out source code...'
-                checkot scm
+                checkout scm
             }
 
         }
