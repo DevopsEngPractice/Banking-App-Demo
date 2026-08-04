@@ -5,6 +5,7 @@ pipeline {
     tools {
         nodejs 'nodejs'
     }
+
     stages {
 
         stage('Checkout') {
@@ -127,7 +128,7 @@ pipeline {
         stage('ACR Login') {
             steps {
                 bat '''
-                az acr login --name %ACR_NAME%
+                az acr login --name bankingappacr123
                 '''
             }
         }
@@ -145,9 +146,11 @@ pipeline {
                 bat '''
                 docker image prune -af
                 docker builder prune -af
+                docker container prune -f
+                docker network prune -f
                 '''
-            }   
-        }          
+            }
+        }        
 
         // stage('Docker Login Test') {
         //     steps {
@@ -214,28 +217,8 @@ pipeline {
 
         //         }
         //     }
-        // }
+        // }     
 
-        stage('Docker Push') {
-
-            steps {
-
-                echo 'Pushing Docker Images...'
-                bat '''
-                    docker compose push
-                '''
-            }
-        }       
-
-        stage('Cleanup') {
-
-            steps {
-                bat '''
-                docker image prune -f
-                '''
-            }
-
-        }
     }
 
 }
