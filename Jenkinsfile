@@ -69,7 +69,6 @@ pipeline {
 
         stage('Validate Docker Compose') {
             steps {
-
                 bat '''
                 docker compose config
                 '''
@@ -100,10 +99,55 @@ pipeline {
         stage('Verify Images') {
             steps {
                 bat '''
-                docker images bankingsvc/*
+                docker images
                '''
             }
-        }      
+        } 
+
+        stage('Azure Login') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'AZURE_CLIENT_ID', variable: 'CLIENT_ID'),
+                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'CLIENT_SECRET'),
+                    string(credentialsId: 'AZURE_TENANT_ID', variable: 'TENANT_ID'),
+                    string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'SUBSCRIPTION_ID')
+                ]) {
+                    bat '''
+                    az login --service-principal ^
+                      --username %CLIENT_ID% ^
+                      --password %CLIENT_SECRET% ^
+                      --tenant %TENANT_ID%
+                    az account set --subscription %SUBSCRIPTION_ID%
+                    az account show
+                    '''
+                }
+            }
+        }
+
+        stage('ACR Login') {
+            steps {
+                bat '''
+                az acr login --name %ACR_NAME%
+                '''
+            }
+        }
+
+        stage('Push Images To ACR') {
+            steps {
+                bat '''
+                docker compose push
+                '''
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                bat '''
+                docker image prune -af
+                docker builder prune -af
+                '''
+            }   
+        }          
 
         // stage('Docker Login Test') {
         //     steps {
@@ -114,83 +158,63 @@ pipeline {
         //                 passwordVariable: 'PASS'
         //             )
         //         ]) {
-
         //             bat '''
         //             echo Username=%USER%
-        //             echo %PASS% > pass.txt
-        //             type > pass.txt
+        //             echo Password Received
+        //             '''
+        //         }
+        //     }
+        // }
+
+        // stage('Docker Login') {
+        //     steps {
+        //         echo 'Logging into Docker Hub...'
+
+        //         withCredentials([
+        //             usernamePassword(
+        //                 credentialsId: 'dockerhub-creds',
+        //                 usernameVariable: 'USER',
+        //                 passwordVariable: 'PASS'
+        //             )
+        //         ]) {
+
+        //             bat '''
+        //             @echo off
+
+        //             echo ===============================
+        //             echo Docker Login Stage
+        //             echo ===============================
+
+        //             echo Username: %USER%
+
+        //             echo %PASS%>dockerpass.txt
+
+        //             docker logout
+
+        //             docker login -u %USER% --password-stdin < dockerpass.txt
+
+        //             if %ERRORLEVEL% neq 0 (
+        //                 echo.
+        //                 echo *********************************
+        //                 echo Docker Login FAILED
+        //                 echo *********************************
+        //                 del dockerpass.txt
+        //                 exit /b 1
+        //             )
+
+        //             del dockerpass.txt
+
+        //             echo.
+        //             echo *********************************
+        //             echo Docker Login Successful
+        //             echo *********************************
+
+        //             docker info
         //             '''
 
         //         }
         //     }
-        // }          
-
-        stage('Docker Login Test') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'USER',
-                        passwordVariable: 'PASS'
-                    )
-                ]) {
-                    bat '''
-                    echo Username=%USER%
-                    echo Password Received
-                    '''
-                }
-            }
-        }
-
-        stage('Docker Login') {
-            steps {
-                echo 'Logging into Docker Hub...'
-
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'USER',
-                        passwordVariable: 'PASS'
-                    )
-                ]) {
-
-                    bat '''
-                    @echo off
-
-                    echo ===============================
-                    echo Docker Login Stage
-                    echo ===============================
-
-                    echo Username: %USER%
-
-                    echo %PASS%>dockerpass.txt
-
-                    docker logout
-
-                    docker login -u %USER% --password-stdin < dockerpass.txt
-
-                    if %ERRORLEVEL% neq 0 (
-                        echo.
-                        echo *********************************
-                        echo Docker Login FAILED
-                        echo *********************************
-                        del dockerpass.txt
-                        exit /b 1
-                    )
-
-                    del dockerpass.txt
-
-                    echo.
-                    echo *********************************
-                    echo Docker Login Successful
-                    echo *********************************
-
-                    docker info
-                    '''
-
-                }
-            }
-        }
+        // }
 
         stage('Docker Push') {
 
