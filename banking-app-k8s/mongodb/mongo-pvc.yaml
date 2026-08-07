@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: auth-mongodb-pvc
+  namespace: banking-app
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+
+  resources:
+    requests:
+      storage: 5Gi
+
+  volumeName: auth-mongodb-pv

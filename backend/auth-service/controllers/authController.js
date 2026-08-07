@@ -23,6 +23,10 @@ const sanitizeUser = (user) => ({
 // @route  POST /api/auth/register
 // @desc   Register a new end user (public). Admin/Employee accounts are created by an admin.
 exports.register = async (req, res) => {
+
+    console.log("========== REGISTER ==========");
+    console.log(req.body);
+
   try {
     const { name, email, password, phone } = req.body;
 
@@ -35,8 +39,14 @@ exports.register = async (req, res) => {
       return res.status(409).json({ success: false, message: 'An account with this email already exists' });
     }
 
+    console.log("Existing User :", existingUser);
+    console.log("Creating user...");
+
+
     const user = await User.create({ name, email, password, phone, role: 'user' });
+    console.log("User Created");
     const token = signToken(user);
+    console.log("JWT Generated");
 
     res.status(201).json({
       success: true,
@@ -45,6 +55,8 @@ exports.register = async (req, res) => {
       user: sanitizeUser(user),
     });
   } catch (error) {
+    console.error("REGISTER ERROR");
+    console.error(error);
     res.status(500).json({ success: false, message: 'Server error during registration', error: error.message });
   }
 };

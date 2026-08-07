@@ -28,8 +28,33 @@ app.use(
     changeOrigin: true,
     pathRewrite: { '^/': '/api/auth/' },
     on: {
+      proxyReq: (proxyReq, req) => {
+        //console.log(`[Gateway] ${req.method} ${req.originalUrl}`);
+        
+        console.log("================================");
+        console.log("[Gateway] Incoming Request");
+        console.log("Method :", req.method);
+        console.log("URL    :", req.originalUrl);
+        console.log("Target :", AUTH_SERVICE_URL);
+
+      },
+      proxyRes: (proxyRes, req) => {
+        //console.log(`[Gateway] Response ${proxyRes.statusCode} for ${req.originalUrl}`);
+
+        console.log("[Gateway] Response");
+        console.log("Status :", proxyRes.statusCode);
+        console.log("URL    :", req.originalUrl);
+
+      },
+
       error: (err, req, res) => {
-        res.status(502).json({ success: false, message: 'auth-service is unreachable', error: err.message });
+        console.error("[Gateway Error]", err);
+        res.status(502).json({
+          success: false,
+          message: err.message,
+        });
+
+       // res.status(502).json({ success: false, message: 'auth-service is unreachable', error: err.message });
       },
     },
   })
@@ -42,9 +67,34 @@ app.use(
     target: OFFERS_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: { '^/': '/api/offers/' },
+
     on: {
+      proxyReq: (proxyReq, req) => {
+        //console.log(`[Gateway] ${req.method} ${req.originalUrl}`);
+
+        console.log("================================");
+        console.log("[Gateway] Incoming Request");
+        console.log("Method :", req.method);
+        console.log("URL    :", req.originalUrl);
+        console.log("Target :", AUTH_SERVICE_URL);
+      },
+      proxyRes: (proxyRes, req) => {
+        //console.log(`[Gateway] Response ${proxyRes.statusCode} for ${req.originalUrl}`);
+
+        console.log("[Gateway] Response");
+        console.log("Status :", proxyRes.statusCode);
+        console.log("URL    :", req.originalUrl);
+      },
       error: (err, req, res) => {
-        res.status(502).json({ success: false, message: 'offers-service is unreachable', error: err.message });
+        //console.error("[Gateway Error]", err);
+        //res.status(502).json({ success: false, message: 'offers-service is unreachable', error: err.message });
+
+        console.error("[Gateway Error]", err);
+
+        res.status(502).json({
+          success: false,
+          message: err.message,
+        });
       },
     },
   })
@@ -58,8 +108,33 @@ app.use(
     changeOrigin: true,
     pathRewrite: { '^/': '/api/services/' },
     on: {
+      proxyReq: (proxyReq, req) => {
+        //console.log(`[Gateway] ${req.method} ${req.originalUrl}`);
+
+        console.log("================================");
+        console.log("[Gateway] Incoming Request");
+        console.log("Method :", req.method);
+        console.log("URL    :", req.originalUrl);
+        console.log("Target :", AUTH_SERVICE_URL);
+      },
+      proxyRes: (proxyRes, req) => {
+        //console.log(`[Gateway] Response ${proxyRes.statusCode} for ${req.originalUrl}`);
+
+        console.log("[Gateway] Response");
+        console.log("Status :", proxyRes.statusCode);
+        console.log("URL    :", req.originalUrl);
+      },
+
       error: (err, req, res) => {
-        res.status(502).json({ success: false, message: 'services-service is unreachable', error: err.message });
+        //console.error("[Gateway Error]", err);
+        //res.status(502).json({ success: false, message: 'services-service is unreachable', error: err.message });
+
+        console.error("[Gateway Error]", err);
+
+        res.status(502).json({
+          success: false,
+          message: err.message,
+        });
       },
     },
   })
