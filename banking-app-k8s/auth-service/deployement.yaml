@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-deployment
+  namespace: banking-app
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: auth-service
+
+  template:
+    metadata:
+      labels:
+        app: auth-service
+
+    spec:
+      containers:
+        - name: auth-container
+
+          image: anildevops/auth-service:v1
+
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5001
+
+          envFrom:
+            - configMapRef:
+                name: auth-config
+
+            - secretRef:
+                name: auth-secret
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+
+            initialDelaySeconds: 10
+            periodSeconds: 5

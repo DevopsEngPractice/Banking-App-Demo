@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: gateway-config
+  namespace: banking-app-dev
+
+data:
+
+  PORT: "5000"
+
+  AUTH_SERVICE_URL: "http://auth-service:5001"
+
+  OFFERS_SERVICE_URL: "http://offers-service:5002"
+
+  SERVICES_SERVICE_URL: "http://services-service:5003"
+
+  CLIENT_URL: "http://frontend"

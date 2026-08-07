@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-deployment
+  labels:
+    app: gateway
+    component: backend
+    tier: api
+
+  namespace: banking-app-dev
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway
+  template: 
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: gateway
+          image: bankingsvc/banking-app-gateway:v1.0.0
+          imagePullPolicy: Always
+          
+          ports:
+            - containerPort: 5000
+
+          envFrom:
+            - configMapRef:
+                name: gateway-config
+            - secretRef:
+                name: gateway-secret
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+          redinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          livenessProbe:
+            httpGet:    
+              path: /health
+              port: 5000  
+            initialDelaySeconds: 30
+            periodSeconds: 5
+
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 0
+          maxSurge: 1
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        

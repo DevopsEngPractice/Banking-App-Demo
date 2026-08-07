@@ -16,6 +16,14 @@ app.get('/health', (req, res) => {
   res.status(200).json({ service: 'auth-service', status: 'OK', timestamp: new Date().toISOString() });
 });
 
+app.use((req, res, next) => {
+    console.log("================================");
+    console.log("[Auth Service]");
+    console.log(req.method);
+    console.log(req.originalUrl);
+    next();
+});
+
 app.use('/api/auth', authRoutes);
 
 app.use((req, res, next) => {
