@@ -3,7 +3,7 @@ kind: Deployment
 
 metadata:
   name: auth-deployment
-  namespace: banking-app
+  namespace: banking-app-dev
 
 spec:
   replicas: 2
