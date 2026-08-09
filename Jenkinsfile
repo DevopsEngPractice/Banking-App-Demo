@@ -598,10 +598,9 @@ pipeline {
         }
 
         always {
-            echo 'Cleaning stopped containers...'
-
             bat '''
             docker container prune -f
+            docker network prune -f
             '''
         }
     }
