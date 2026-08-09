@@ -16,8 +16,8 @@ pipeline {
         K8S_NAMESPACE = 'banking-app-dev'
 
         // CHANGE THESE TWO VALUES
-        AKS_RESOURCE_GROUP = 'YOUR_RESOURCE_GROUP'
-        AKS_CLUSTER_NAME = 'YOUR_AKS_CLUSTER'
+        AKS_RESOURCE_GROUP = 'RG-01'
+        AKS_CLUSTER_NAME = 'Banking-App-Cluster'
     }    
 
     stages {
