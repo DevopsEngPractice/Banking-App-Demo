@@ -8,26 +8,19 @@ pipeline {
 
     environment {
 
-        // Azure Container Registry
         ACR_NAME = 'bankingappacr123'
         ACR_LOGIN_SERVER = 'bankingappacr123.azurecr.io'
 
-        // Image version
         IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
 
-        // Kubernetes
         K8S_NAMESPACE = 'banking-app-dev'
 
         // CHANGE THESE TWO VALUES
         AKS_RESOURCE_GROUP = 'YOUR_RESOURCE_GROUP'
         AKS_CLUSTER_NAME = 'YOUR_AKS_CLUSTER'
-    }
+    }    
 
     stages {
-
-        // ============================================================
-        // 1. CHECKOUT
-        // ============================================================
 
         stage('Checkout') {
 
@@ -40,11 +33,6 @@ pipeline {
                 checkout scm
             }
         }
-
-
-        // ============================================================
-        // 2. BUILD INFORMATION
-        // ============================================================
 
         stage('Build Information') {
             steps {
@@ -60,11 +48,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 3. CREATE ENV FILES
-        // ============================================================
 
         stage('Create Env Files') {
             steps {
@@ -136,10 +119,6 @@ pipeline {
             }
         }
 
-        // ============================================================
-        // 5. VERIFY IMAGE TAG
-        // ============================================================
-
         stage('Verify Variables') {
 
             steps {
@@ -161,32 +140,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 6. VALIDATE DOCKER COMPOSE
-        // ============================================================
-
-        stage('Validate Docker Compose') {
-
-            steps {
-
-                bat '''
-                echo ========================================
-                echo Docker Compose Validation
-                echo ========================================
-
-                echo IMAGE_TAG=%IMAGE_TAG%
-
-                docker compose config
-                '''
-            }
-        }
-
-
-        // ============================================================
-        // 7. BUILD DOCKER IMAGES
-        // ============================================================
 
         stage('Docker Build') {
 
@@ -226,10 +179,6 @@ pipeline {
                 '''
             }
         }    
-
-        // ============================================================
-        // 9. AZURE LOGIN
-        // ============================================================
 
         stage('Azure Login') {
 
@@ -277,11 +226,6 @@ pipeline {
             }
         }
 
-
-        // ============================================================
-        // 10. ACR LOGIN
-        // ============================================================
-
         stage('ACR Login') {
 
             steps {
@@ -295,11 +239,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 11. VERIFY ACR
-        // ============================================================
 
         stage('Verify ACR') {
 
@@ -325,11 +264,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 12. PUSH IMAGES TO ACR
-        // ============================================================
 
         stage('Push Images To ACR') {
 
@@ -363,11 +297,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 13. VERIFY ACR IMAGES
-        // ============================================================
 
         stage('Verify ACR Images') {
 
@@ -415,11 +344,6 @@ pipeline {
             }
         }
 
-
-        // ============================================================
-        // 14. GET AKS CREDENTIALS
-        // ============================================================
-
         stage('Get AKS Credentials') {
 
             steps {
@@ -445,11 +369,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 15. DEPLOY TO AKS
-        // ============================================================
 
         stage('Deploy To AKS') {
 
@@ -521,11 +440,6 @@ pipeline {
             }
         }
 
-
-        // ============================================================
-        // 16. WAIT FOR ROLLOUT
-        // ============================================================
-
         stage('Wait For Rollout') {
 
             steps {
@@ -562,11 +476,6 @@ pipeline {
                 '''
             }
         }
-
-
-        // ============================================================
-        // 17. VERIFY AKS DEPLOYMENT
-        // ============================================================
 
         stage('Verify AKS Deployment') {
 
@@ -665,54 +574,51 @@ pipeline {
             }
         }
 
-    // ================================================================
-    // POST ACTIONS
-    // IMPORTANT: post is OUTSIDE stages
-    // ================================================================
-
-    post {
-
-        success {
-
-            echo '''
-            ========================================
-            PIPELINE SUCCESS
-            ========================================
-
-            Banking application deployed successfully.
-
-            Docker Image:
-            v1.0.${BUILD_NUMBER}
-
-            Kubernetes Namespace:
-            banking-app-dev
-
-            ========================================
-            '''
-        }
-
-        failure {
-
-            echo '''
-            ========================================
-            PIPELINE FAILED
-            ========================================
-
-            Check the failed stage and Jenkins console output.
-
-            ========================================
-            '''
-        }
-
-        always {
-
-            echo 'Cleaning temporary Docker resources...'
-
-            bat '''
-            docker container prune -f
-            docker network prune -f
-            docker builder prune -af
-            '''
-        }
     }
+
+            post {
+
+            success {
+
+                echo '''
+                ========================================
+                PIPELINE SUCCESS
+                ========================================
+
+                Banking application deployed successfully.
+
+                Docker Image:
+                v1.0.${BUILD_NUMBER}
+
+                Kubernetes Namespace:
+                banking-app-dev
+
+                ========================================
+                '''
+            }
+
+            failure {
+
+                echo '''
+                ========================================
+                PIPELINE FAILED
+                ========================================
+
+                Check the failed stage and Jenkins console output.
+
+                ========================================
+                '''
+            }
+
+            always {
+
+                echo 'Cleaning temporary Docker resources...'
+
+                bat '''
+                docker container prune -f
+                docker network prune -f
+                docker builder prune -af
+                '''
+            }
+        }
 }
