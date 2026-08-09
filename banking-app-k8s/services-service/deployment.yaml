@@ -14,7 +14,7 @@ spec:
         app: services-dep
     spec:
       containers:
-        - name: services-container
+        - name: services-service
           image: bankingappacr123.azurecr.io/banking-app-services-service:v1.0.${BUILD_NUMBER}
           imagePullPolicy: Always
 

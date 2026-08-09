@@ -19,7 +19,7 @@ spec:
 
     spec:
       containers:
-        - name: offers-container
+        - name: offers-service
 
           image: bankingappacr123.azurecr.io/banking-app-offers-service:v1.0.${BUILD_NUMBER}
 
