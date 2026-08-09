@@ -21,19 +21,44 @@ spec:
       containers:
         - name: auth-container
 
-          image: anildevops/auth-service:v1
+          image: bankingappacr123.azurecr.io/banking-app-auth-service:v1.0.${BUILD_NUMBER}
 
           imagePullPolicy: Always
 
           ports:
             - containerPort: 5001
 
-          envFrom:
-            - configMapRef:
-                name: auth-config
+          env:
+            - name: PORT
+              valueFrom:
+               configMapKeyRef:
+                 name: banking-app-config
+                 key: AUTH_PORT
 
-            - secretRef:
-                name: auth-secret
+            
+            - name: AUTH_SERVICE_URL  
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: AUTH_SERVICE_URL
+
+            - name: CLIENT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: CLIENT_URL
+
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: AUTH_MONGO_URI
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: AUTH_JWT_SECRET
 
           resources:
             requests:

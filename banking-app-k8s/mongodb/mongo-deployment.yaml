@@ -2,20 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: mongodb-auth
-  namespace: banking-app
+  name: mongodb
+  namespace: banking-app-dev
 
 spec:
   replicas: 1
 
   selector:
     matchLabels:
-      app: mongodb-auth
+      app: mongodb
 
   template:
     metadata:
       labels:
-        app: mongodb-auth
+        app: mongodb
 
     spec:
       containers:
@@ -26,6 +26,19 @@ spec:
           ports:
             - containerPort: 27017
 
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: mongo-root-username
+
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: mongo-root-password
+
           volumeMounts:
             - name: mongodb-storage
               mountPath: /data/db
@@ -33,4 +46,4 @@ spec:
       volumes:
         - name: mongodb-storage
           persistentVolumeClaim:
-            claimName: auth-mongodb-pvc
+            claimName: mongodb-pvc

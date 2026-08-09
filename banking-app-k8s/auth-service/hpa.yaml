@@ -3,7 +3,7 @@ kind: HorizontalPodAutoscaler
 
 metadata:
   name: auth-hpa
-  namespace: banking-app
+  namespace: banking-app-dev
 
 spec:
   scaleTargetRef:

@@ -2,37 +2,64 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gateway-deployment
+  namespace: banking-app-dev
   labels:
     app: gateway
-    component: backend
-    tier: api
-
-  namespace: banking-app-dev
-
+ 
 spec:
   replicas: 2
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
   selector:
     matchLabels:
       app: gateway
+
   template: 
     metadata:
       labels:
         app: gateway
+
     spec:
+      securityContext:
+        runAsNonRoot: true
+
       restartPolicy: Always
+
       containers:
         - name: gateway
-          image: bankingsvc/banking-app-gateway:v1.0.0
+          image: bankingappacr123.azurecr.io/banking-app-gateway:v1.0.${BUILD_NUMBER}
           imagePullPolicy: Always
-          
           ports:
             - containerPort: 5000
+          env: 
+          - name: PORT
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: GATEWAY_PORT
 
-          envFrom:
-            - configMapRef:
-                name: gateway-config
-            - secretRef:
-                name: gateway-secret
+          - name: AUTH_SERVICE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: AUTH_SERVICE_URL
+
+          - name: OFFERS_SERVICE_URL
+            valueFrom:  
+              configMapKeyRef:
+                name: banking-app-config
+                key: OFFERS_SERVICE_URL
+
+          - name: SERVICES_SERVICE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: SERVICES_SERVICE_URL
 
           resources:
             requests:
@@ -42,7 +69,7 @@ spec:
               memory: "256Mi"
               cpu: "500m"
 
-          redinessProbe:
+          readinessProbe:
             httpGet:
               path: /health
               port: 5000
@@ -56,15 +83,6 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 5
 
-      strategy:
-        type: RollingUpdate
-        rollingUpdate:
-          maxUnavailable: 0
-          maxSurge: 1
-
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        allowPrivilegeEscalation: false
-        readOnlyRootFilesystem: true
-        
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
