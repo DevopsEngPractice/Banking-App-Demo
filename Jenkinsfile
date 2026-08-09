@@ -7,7 +7,10 @@ pipeline {
     }
 
     environment {
+        ACR_NAME = 'bankingappacr123'
+        ACR_LOGIN_SERVER = 'bankingappacr123.azurecr.io'
         IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
+        K8S_NAMESPACE = 'banking-app-dev'
     }
 
     stages {
@@ -16,6 +19,26 @@ pipeline {
             steps {
                 echo 'Hello, World! Checking out source code...'
                 checkout scm
+            }
+        }
+
+        stage('Build Information') {
+
+            steps {
+
+                bat '''
+                echo ========================================
+                echo Jenkins Build Information
+                echo ========================================
+
+                echo JOB_NAME=%JOB_NAME%
+                echo BUILD_NUMBER=%BUILD_NUMBER%
+                echo IMAGE_TAG=%IMAGE_TAG%
+                echo WORKSPACE=%WORKSPACE%
+
+                echo ========================================
+                '''
+
             }
         }
 
@@ -72,21 +95,55 @@ pipeline {
             }
         }
 
-        stage('Validate Docker Compose') {
-            steps {
-                bat '''
-                docker compose config
-                '''
-            }
-        }
-
         stage('Verify Docker') {
 
             steps {
 
                 bat '''
+                echo ========================================
+                echo Docker Version
+                echo ========================================
+
                 docker version
+
+                echo.
+                echo ========================================
+                echo Docker Compose Version
+                echo ========================================
+
                 docker compose version
+                '''
+
+            }
+        }
+
+        stage('Verify Variables') {
+
+            steps {
+
+                bat '''
+                echo ========================================
+                echo IMAGE TAG VALIDATION
+                echo ========================================
+
+                echo BUILD_NUMBER=%BUILD_NUMBER%
+                echo IMAGE_TAG=%IMAGE_TAG%
+
+                if "%IMAGE_TAG%"=="" (
+                    echo ERROR: IMAGE_TAG is empty
+                    exit /b 1
+                )
+
+                echo IMAGE_TAG is valid
+                '''
+
+            }
+        }
+
+        stage('Validate Docker Compose') {
+            steps {
+                bat '''
+                docker compose config
                 '''
             }
         }
@@ -96,6 +153,13 @@ pipeline {
                 bat '''
                 echo BUILD_NUMBER=%BUILD_NUMBER%
                 echo IMAGE_TAG=%IMAGE_TAG%
+
+                if "%IMAGE_TAG%"=="" (
+                    echo ERROR: IMAGE_TAG is empty
+                    exit /b 1
+                )
+
+                echo IMAGE_TAG is valid
                 '''
             }
         }
@@ -108,24 +172,54 @@ pipeline {
                 docker compose build
                 '''
             }
-}
+        }
 
-        stage('Verify Images') {
+        stage('Validate Docker Compose') {
             steps {
                 bat '''
-                echo ========================================
-                echo IMAGE TAG = %IMAGE_TAG%
-                echo ========================================    
                 docker compose config
-                echo.
-                echo ========================================
-                echo Docker Images
-                echo ========================================
-
-                docker images | findstr "bankingappacr123.azurecr.io"
                 '''
             }
         } 
+
+        stage('Docker Build') {
+
+            steps {
+
+                echo '========================================'
+                echo 'Building Docker Images'
+                echo '========================================'
+
+                bat '''
+                echo IMAGE_TAG=%IMAGE_TAG%
+
+                docker compose build
+                '''
+
+            }
+        }
+
+        stage('Verify Images') {
+
+            steps {
+
+                echo '========================================'
+                echo 'Docker Images'
+                echo '========================================'
+
+                bat '''
+                docker images
+
+                echo.
+                echo ========================================
+                echo Images With Current Tag
+                echo ========================================
+
+                docker images | findstr "%IMAGE_TAG%"
+                '''
+
+            }
+        }
 
         stage('Azure Login') {
             steps {
@@ -153,7 +247,33 @@ pipeline {
                 az acr login --name bankingappacr123
                 '''
             }
-        }
+        }    
+
+        stage('Verify ACR') {
+
+            steps {
+
+                echo '========================================'
+                echo 'Verify ACR'
+                echo '========================================'
+
+                bat '''
+                az acr show ^
+                  --name %ACR_NAME% ^
+                  --output table
+
+                echo.
+                echo ========================================
+                echo ACR Repositories
+                echo ========================================
+
+                az acr repository list ^
+                  --name %ACR_NAME% ^
+                  --output table
+                '''
+
+            }
+        }     
 
         stage('Push Images To ACR') {
             steps {
@@ -183,7 +303,7 @@ pipeline {
                 echo ========================================
                 '''
             }
-        }
+        }              
 
         stage('Verify ACR Images') {
             steps {
@@ -252,37 +372,241 @@ pipeline {
             }
         }        
 
+        stage('Get AKS Credentials') {
+            steps {
+                bat '''
+                echo ========================================
+                echo Getting AKS Credentials
+                echo ========================================
+
+                az aks get-credentials ^
+                --resource-group YOUR_RESOURCE_GROUP ^
+                --name YOUR_AKS_CLUSTER ^
+                --overwrite-existing
+
+                echo.
+                echo ========================================
+                echo Verify AKS Connection
+                echo ========================================
+
+                kubectl config current-context
+                kubectl get nodes
+                '''
+            }
+        }    
+
+        stage('Deploy To AKS') {
+
+            steps {
+
+                echo '========================================'
+                echo 'Deploying Application To AKS'
+                echo '========================================'
+
+                bat '''
+                echo.
+                echo ========================================
+                echo Deploying Frontend
+                echo ========================================
+
+                kubectl set image deployment/frontend-deployment ^
+                  frontend=%ACR_LOGIN_SERVER%/banking-app-frontend:%IMAGE_TAG% ^
+                  -n %K8S_NAMESPACE%
+
+
+                echo.
+                echo ========================================
+                echo Deploying API Gateway
+                echo ========================================
+
+                kubectl set image deployment/gateway-deployment ^
+                  gateway=%ACR_LOGIN_SERVER%/banking-app-api-gateway:%IMAGE_TAG% ^
+                  -n %K8S_NAMESPACE%
+
+
+                echo.
+                echo ========================================
+                echo Deploying Auth Service
+                echo ========================================
+
+                kubectl set image deployment/auth-deployment ^
+                  auth-service=%ACR_LOGIN_SERVER%/banking-app-auth-service:%IMAGE_TAG% ^
+                  -n %K8S_NAMESPACE%
+
+
+                echo.
+                echo ========================================
+                echo Deploying Offers Service
+                echo ========================================
+
+                kubectl set image deployment/offers-deployment ^
+                  offers-service=%ACR_LOGIN_SERVER%/banking-app-offers-service:%IMAGE_TAG% ^
+                  -n %K8S_NAMESPACE%
+
+
+                echo.
+                echo ========================================
+                echo Deploying Services Service
+                echo ========================================
+
+                kubectl set image deployment/services-deployment ^
+                  services-service=%ACR_LOGIN_SERVER%/banking-app-services-service:%IMAGE_TAG% ^
+                  -n %K8S_NAMESPACE%
+
+
+                echo.
+                echo ========================================
+                echo Image Update Completed
+                echo IMAGE_TAG=%IMAGE_TAG%
+                echo ========================================
+                '''
+
+            }
+        }  
+
+        stage('Wait For Rollout') {
+
+            steps {
+
+                echo '========================================'
+                echo 'Waiting For Kubernetes Rollout'
+                echo '========================================'
+
+                bat '''
+                kubectl rollout status deployment/frontend-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  --timeout=180s
+
+                kubectl rollout status deployment/gateway-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  --timeout=180s
+
+                kubectl rollout status deployment/auth-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  --timeout=180s
+
+                kubectl rollout status deployment/offers-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  --timeout=180s
+
+                kubectl rollout status deployment/services-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  --timeout=180s
+                '''
+
+            }
+        }      
+
         stage('Verify AKS Deployment') {
 
             steps {
 
+                echo '========================================'
+                echo 'AKS Deployment Verification'
+                echo '========================================'
+
                 bat '''
+                echo.
                 echo ========================================
-                echo AKS Deployments
+                echo DEPLOYMENTS
                 echo ========================================
 
-                kubectl get deployments -n banking-app-dev
+                kubectl get deployments ^
+                  -n %K8S_NAMESPACE%
 
                 echo.
                 echo ========================================
-                echo Pods
+                echo PODS
                 echo ========================================
 
-                kubectl get pods -n banking-app-dev
-                '''
-            }
-        }        
+                kubectl get pods ^
+                  -n %K8S_NAMESPACE% ^
+                  -o wide
 
-        stage('Cleanup') {
-            steps {
-                bat '''
-                docker image prune -af
-                docker builder prune -af
-                docker container prune -f
-                docker network prune -f
+                echo.
+                echo ========================================
+                echo SERVICES
+                echo ========================================
+
+                kubectl get services ^
+                  -n %K8S_NAMESPACE%
+
+                echo.
+                echo ========================================
+                echo CURRENT IMAGES
+                echo ========================================
+
+                kubectl get deployment frontend-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  -o jsonpath="{.spec.template.spec.containers[0].image}"
+
+                echo.
+
+                kubectl get deployment gateway-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  -o jsonpath="{.spec.template.spec.containers[0].image}"
+
+                echo.
+
+                kubectl get deployment auth-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  -o jsonpath="{.spec.template.spec.containers[0].image}"
+
+                echo.
+
+                kubectl get deployment offers-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  -o jsonpath="{.spec.template.spec.containers[0].image}"
+
+                echo.
+
+                kubectl get deployment services-deployment ^
+                  -n %K8S_NAMESPACE% ^
+                  -o jsonpath="{.spec.template.spec.containers[0].image}"
+
+                echo.
+                echo ========================================
+                echo AKS Deployment Completed
+                echo IMAGE_TAG=%IMAGE_TAG%
+                echo ========================================
+                '''
+
+            }
+        }
+
+        post {
+
+            success {
+
+                echo '''
+                ========================================
+                PIPELINE SUCCESS
+                ========================================
+                Banking application deployed successfully.
                 '''
             }
-        } 
+
+            failure {
+
+                    echo '''
+                    ========================================
+                    PIPELINE FAILED
+                    ========================================
+                    Check the failed stage and Jenkins console output.
+                    '''
+                }
+
+                always {
+
+                    echo 'Cleaning temporary Docker resources...'
+
+                    bat '''
+                    docker container prune -f
+                    docker network prune -f
+                    docker builder prune -af
+                    '''
+                }
+            }
 
     }
 
