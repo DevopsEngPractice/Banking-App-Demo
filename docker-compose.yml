@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
   auth-service:
-    image: bankingappacr123.azurecr.io/banking-app-auth-service:v1.0.${IMAGE_TAG}
+    image: bankingappacr123.azurecr.io/banking-app-auth-service:${IMAGE_TAG:-local}
     build:
       context: ./backend/auth-service
     container_name: auth-service
@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: bankingappacr123.azurecr.io/banking-app-api-gateway:v1.0.${IMAGE_TAG}
+    image: bankingappacr123.azurecr.io/banking-app-api-gateway:${IMAGE_TAG:-local}
     build:
       context: ./backend/gateway
     container_name: api-gateway
@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
 
   offers-service:
-    image: bankingappacr123.azurecr.io/banking-app-offers-service:v1.0.${IMAGE_TAG}
+    image: bankingappacr123.azurecr.io/banking-app-offers-service:${IMAGE_TAG:-local}
     build:
       context: ./backend/offers-service
     container_name: offers-service
@@ -51,7 +51,7 @@ services:
     restart: unless-stopped
 
   services-service:
-    image: bankingappacr123.azurecr.io/banking-app-services-service:v1.0.${IMAGE_TAG}
+    image: bankingappacr123.azurecr.io/banking-app-services-service:${IMAGE_TAG:-local}
     build:
       context: ./backend/services-service
     container_name: services-service
@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: bankingappacr123.azurecr.io/banking-app-frontend:v1.0.${IMAGE_TAG}
+    image: bankingappacr123.azurecr.io/banking-app-frontend:${IMAGE_TAG:-local}
     build:
       context: ./frontend
     container_name: banking-ui
