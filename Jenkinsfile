@@ -6,6 +6,10 @@ pipeline {
         nodejs 'nodejs'
     }
 
+    environment {
+        IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -90,8 +94,9 @@ pipeline {
         stage('Docker Build') {
 
             steps {
-                echo 'Building Docker Images...'
+                echo 'Building Docker Images with tag ${env.IMAGE_TAG}...'
                 bat '''
+                echo IMAGE_TAG=%IMAGE_TAG%
                 docker compose build
                 '''
             }
@@ -140,6 +145,58 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy Frontend to AKS') {
+            steps {
+                bat '''
+                echo ========================================
+                echo Deploying Banking Application
+                echo IMAGE_TAG=%IMAGE_TAG%
+                echo ========================================
+
+                kubectl set image deployment/frontend-deployment ^
+                frontend=bankingappacr123.azurecr.io/banking-app-frontend:%IMAGE_TAG% ^
+                -n banking-app-dev
+
+                kubectl set image deployment/gateway-deployment ^
+                gateway=bankingappacr123.azurecr.io/banking-app-api-gateway:%IMAGE_TAG% ^
+                -n banking-app-dev
+
+                kubectl set image deployment/auth-deployment ^
+                auth-service=bankingappacr123.azurecr.io/banking-app-auth-service:%IMAGE_TAG% ^
+                -n banking-app-dev
+
+                kubectl set image deployment/offers-deployment ^
+                offers-service=bankingappacr123.azurecr.io/banking-app-offers-service:%IMAGE_TAG% ^
+                -n banking-app-dev
+
+                kubectl set image deployment/services-deployment ^
+                services-service=bankingappacr123.azurecr.io/banking-app-services-service:%IMAGE_TAG% ^
+                -n banking-app-dev
+                '''
+            }
+        }        
+
+        stage('Verify AKS Deployment') {
+
+            steps {
+
+                bat '''
+                echo ========================================
+                echo AKS Deployments
+                echo ========================================
+
+                kubectl get deployments -n banking-app-dev
+
+                echo.
+                echo ========================================
+                echo Pods
+                echo ========================================
+
+                kubectl get pods -n banking-app-dev
+                '''
+            }
+        }        
 
         stage('Cleanup') {
             steps {
