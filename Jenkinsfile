@@ -576,49 +576,33 @@ pipeline {
 
     }
 
-            post {
-
-            success {
-
-                echo '''
-                ========================================
-                PIPELINE SUCCESS
-                ========================================
-
-                Banking application deployed successfully.
-
-                Docker Image:
-                v1.0.${BUILD_NUMBER}
-
-                Kubernetes Namespace:
-                banking-app-dev
-
-                ========================================
-                '''
-            }
-
-            failure {
-
-                echo '''
-                ========================================
-                PIPELINE FAILED
-                ========================================
-
-                Check the failed stage and Jenkins console output.
-
-                ========================================
-                '''
-            }
-
-            always {
-
-                echo 'Cleaning temporary Docker resources...'
-
-                bat '''
-                docker container prune -f
-                docker network prune -f
-                docker builder prune -af
-                '''
-            }
+    post {
+        success {
+            echo '''
+            ========================================
+            PIPELINE SUCCESS
+            ========================================
+            Banking application deployed successfully.
+            ========================================
+            '''
         }
+
+        failure {
+            echo '''
+            ========================================
+            PIPELINE FAILED
+            ========================================
+            Check the failed stage and Jenkins console output.
+            ========================================
+            '''
+        }
+
+        always {
+            echo 'Cleaning stopped containers...'
+
+            bat '''
+            docker container prune -f
+            '''
+        }
+    }
 }
