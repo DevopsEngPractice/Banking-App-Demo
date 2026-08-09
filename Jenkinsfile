@@ -7,40 +7,64 @@ pipeline {
     }
 
     environment {
+
+        // Azure Container Registry
         ACR_NAME = 'bankingappacr123'
         ACR_LOGIN_SERVER = 'bankingappacr123.azurecr.io'
+
+        // Image version
         IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
+
+        // Kubernetes
         K8S_NAMESPACE = 'banking-app-dev'
+
+        // CHANGE THESE TWO VALUES
+        AKS_RESOURCE_GROUP = 'YOUR_RESOURCE_GROUP'
+        AKS_CLUSTER_NAME = 'YOUR_AKS_CLUSTER'
     }
 
     stages {
 
+        // ============================================================
+        // 1. CHECKOUT
+        // ============================================================
+
         stage('Checkout') {
+
             steps {
-                echo 'Hello, World! Checking out source code...'
+
+                echo '========================================'
+                echo 'Checking out source code'
+                echo '========================================'
+
                 checkout scm
             }
         }
 
+
+        // ============================================================
+        // 2. BUILD INFORMATION
+        // ============================================================
+
         stage('Build Information') {
-
             steps {
-
                 bat '''
                 echo ========================================
                 echo Jenkins Build Information
                 echo ========================================
-
                 echo JOB_NAME=%JOB_NAME%
                 echo BUILD_NUMBER=%BUILD_NUMBER%
                 echo IMAGE_TAG=%IMAGE_TAG%
                 echo WORKSPACE=%WORKSPACE%
-
                 echo ========================================
                 '''
-
             }
         }
+
+
+        // ============================================================
+        // 3. CREATE ENV FILES
+        // ============================================================
 
         stage('Create Env Files') {
             steps {
@@ -98,24 +122,23 @@ pipeline {
         stage('Verify Docker') {
 
             steps {
-
                 bat '''
                 echo ========================================
                 echo Docker Version
                 echo ========================================
-
                 docker version
-
                 echo.
                 echo ========================================
                 echo Docker Compose Version
                 echo ========================================
-
                 docker compose version
                 '''
-
             }
         }
+
+        // ============================================================
+        // 5. VERIFY IMAGE TAG
+        // ============================================================
 
         stage('Verify Variables') {
 
@@ -136,128 +159,157 @@ pipeline {
 
                 echo IMAGE_TAG is valid
                 '''
-
             }
         }
 
+
+        // ============================================================
+        // 6. VALIDATE DOCKER COMPOSE
+        // ============================================================
+
         stage('Validate Docker Compose') {
+
             steps {
+
                 bat '''
+                echo ========================================
+                echo Docker Compose Validation
+                echo ========================================
+
+                echo IMAGE_TAG=%IMAGE_TAG%
+
                 docker compose config
                 '''
             }
         }
 
-        stage('Verify Variables') {
-            steps {
-                bat '''
-                echo BUILD_NUMBER=%BUILD_NUMBER%
-                echo IMAGE_TAG=%IMAGE_TAG%
 
-                if "%IMAGE_TAG%"=="" (
-                    echo ERROR: IMAGE_TAG is empty
-                    exit /b 1
-                )
-
-                echo IMAGE_TAG is valid
-                '''
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                echo "Building Docker Images with tag ${IMAGE_TAG}..."
-                bat '''
-                echo IMAGE_TAG=%IMAGE_TAG%
-                docker compose build
-                '''
-            }
-        }
-
-        stage('Validate Docker Compose') {
-            steps {
-                bat '''
-                docker compose config
-                '''
-            }
-        } 
+        // ============================================================
+        // 7. BUILD DOCKER IMAGES
+        // ============================================================
 
         stage('Docker Build') {
 
             steps {
 
-                echo '========================================'
-                echo 'Building Docker Images'
-                echo '========================================'
+                echo "Building Docker images with tag ${IMAGE_TAG}"
 
                 bat '''
+                echo ========================================
+                echo Building Docker Images
+                echo ========================================
+
                 echo IMAGE_TAG=%IMAGE_TAG%
 
                 docker compose build
-                '''
 
+                echo.
+                echo ========================================
+                echo Docker Build Completed
+                echo ========================================
+                '''
             }
         }
 
         stage('Verify Images') {
-
             steps {
-
-                echo '========================================'
-                echo 'Docker Images'
-                echo '========================================'
-
                 bat '''
+                echo ========================================
+                echo Docker Images
+                echo ========================================
                 docker images
-
                 echo.
                 echo ========================================
                 echo Images With Current Tag
                 echo ========================================
-
                 docker images | findstr "%IMAGE_TAG%"
                 '''
-
             }
-        }
+        }    
+
+        // ============================================================
+        // 9. AZURE LOGIN
+        // ============================================================
 
         stage('Azure Login') {
+
             steps {
+
                 withCredentials([
-                    string(credentialsId: 'AZURE_CLIENT_ID', variable: 'CLIENT_ID'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'CLIENT_SECRET'),
-                    string(credentialsId: 'AZURE_TENANT_ID', variable: 'TENANT_ID'),
-                    string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'SUBSCRIPTION_ID')
+
+                    string(
+                        credentialsId: 'AZURE_CLIENT_ID',
+                        variable: 'CLIENT_ID'
+                    ),
+
+                    string(
+                        credentialsId: 'AZURE_CLIENT_SECRET',
+                        variable: 'CLIENT_SECRET'
+                    ),
+
+                    string(
+                        credentialsId: 'AZURE_TENANT_ID',
+                        variable: 'TENANT_ID'
+                    ),
+
+                    string(
+                        credentialsId: 'AZURE_SUBSCRIPTION_ID',
+                        variable: 'SUBSCRIPTION_ID'
+                    )
+
                 ]) {
+
                     bat '''
+                    echo ========================================
+                    echo Azure Login
+                    echo ========================================
+
                     az login --service-principal ^
                       --username %CLIENT_ID% ^
                       --password %CLIENT_SECRET% ^
                       --tenant %TENANT_ID%
+
                     az account set --subscription %SUBSCRIPTION_ID%
+
                     az account show
                     '''
                 }
             }
         }
 
+
+        // ============================================================
+        // 10. ACR LOGIN
+        // ============================================================
+
         stage('ACR Login') {
+
             steps {
+
                 bat '''
-                az acr login --name bankingappacr123
+                echo ========================================
+                echo Azure Container Registry Login
+                echo ========================================
+
+                az acr login --name %ACR_NAME%
                 '''
             }
-        }    
+        }
+
+
+        // ============================================================
+        // 11. VERIFY ACR
+        // ============================================================
 
         stage('Verify ACR') {
 
             steps {
 
-                echo '========================================'
-                echo 'Verify ACR'
-                echo '========================================'
-
                 bat '''
+                echo ========================================
+                echo Verify Azure Container Registry
+                echo ========================================
+
                 az acr show ^
                   --name %ACR_NAME% ^
                   --output table
@@ -271,42 +323,56 @@ pipeline {
                   --name %ACR_NAME% ^
                   --output table
                 '''
-
             }
-        }     
+        }
+
+
+        // ============================================================
+        // 12. PUSH IMAGES TO ACR
+        // ============================================================
 
         stage('Push Images To ACR') {
+
             steps {
+
                 bat '''
                 echo ========================================
                 echo Pushing Images To ACR
                 echo IMAGE_TAG=%IMAGE_TAG%
                 echo ========================================
 
-                docker push bankingappacr123.azurecr.io/banking-app-auth-service:%IMAGE_TAG%
+                docker push %ACR_LOGIN_SERVER%/banking-app-auth-service:%IMAGE_TAG%
                 if %ERRORLEVEL% neq 0 exit /b 1
 
-                docker push bankingappacr123.azurecr.io/banking-app-api-gateway:%IMAGE_TAG%
+                docker push %ACR_LOGIN_SERVER%/banking-app-api-gateway:%IMAGE_TAG%
                 if %ERRORLEVEL% neq 0 exit /b 1
 
-                docker push bankingappacr123.azurecr.io/banking-app-offers-service:%IMAGE_TAG%
+                docker push %ACR_LOGIN_SERVER%/banking-app-offers-service:%IMAGE_TAG%
                 if %ERRORLEVEL% neq 0 exit /b 1
 
-                docker push bankingappacr123.azurecr.io/banking-app-services-service:%IMAGE_TAG%
+                docker push %ACR_LOGIN_SERVER%/banking-app-services-service:%IMAGE_TAG%
                 if %ERRORLEVEL% neq 0 exit /b 1
 
-                docker push bankingappacr123.azurecr.io/banking-app-frontend:%IMAGE_TAG%
+                docker push %ACR_LOGIN_SERVER%/banking-app-frontend:%IMAGE_TAG%
                 if %ERRORLEVEL% neq 0 exit /b 1
 
+                echo.
                 echo ========================================
-                echo All images pushed successfully
+                echo ALL IMAGES PUSHED SUCCESSFULLY
                 echo ========================================
                 '''
             }
-        }              
+        }
+
+
+        // ============================================================
+        // 13. VERIFY ACR IMAGES
+        // ============================================================
 
         stage('Verify ACR Images') {
+
             steps {
+
                 bat '''
                 echo ========================================
                 echo Verifying ACR Images
@@ -314,75 +380,59 @@ pipeline {
                 echo ========================================
 
                 az acr repository show-tags ^
-                --name bankingappacr123 ^
-                --repository banking-app-frontend ^
-                --output table
+                  --name %ACR_NAME% ^
+                  --repository banking-app-frontend ^
+                  --output table
+
+                echo.
 
                 az acr repository show-tags ^
-                --name bankingappacr123 ^
-                --repository banking-app-api-gateway ^
-                --output table
+                  --name %ACR_NAME% ^
+                  --repository banking-app-api-gateway ^
+                  --output table
+
+                echo.
 
                 az acr repository show-tags ^
-                --name bankingappacr123 ^
-                --repository banking-app-auth-service ^
-                --output table
+                  --name %ACR_NAME% ^
+                  --repository banking-app-auth-service ^
+                  --output table
+
+                echo.
 
                 az acr repository show-tags ^
-                --name bankingappacr123 ^
-                --repository banking-app-offers-service ^
-                --output table
+                  --name %ACR_NAME% ^
+                  --repository banking-app-offers-service ^
+                  --output table
+
+                echo.
 
                 az acr repository show-tags ^
-                --name bankingappacr123 ^
-                --repository banking-app-services-service ^
-                --output table
+                  --name %ACR_NAME% ^
+                  --repository banking-app-services-service ^
+                  --output table
                 '''
             }
         }
 
-        stage('Deploy Frontend to AKS') {
-            steps {
-                bat '''
-                echo ========================================
-                echo Deploying Banking Application
-                echo IMAGE_TAG=%IMAGE_TAG%
-                echo ========================================
 
-                kubectl set image deployment/frontend-deployment ^
-                frontend=bankingappacr123.azurecr.io/banking-app-frontend:%IMAGE_TAG% ^
-                -n banking-app-dev
-
-                kubectl set image deployment/gateway-deployment ^
-                gateway=bankingappacr123.azurecr.io/banking-app-api-gateway:%IMAGE_TAG% ^
-                -n banking-app-dev
-
-                kubectl set image deployment/auth-deployment ^
-                auth-service=bankingappacr123.azurecr.io/banking-app-auth-service:%IMAGE_TAG% ^
-                -n banking-app-dev
-
-                kubectl set image deployment/offers-deployment ^
-                offers-service=bankingappacr123.azurecr.io/banking-app-offers-service:%IMAGE_TAG% ^
-                -n banking-app-dev
-
-                kubectl set image deployment/services-deployment ^
-                services-service=bankingappacr123.azurecr.io/banking-app-services-service:%IMAGE_TAG% ^
-                -n banking-app-dev
-                '''
-            }
-        }        
+        // ============================================================
+        // 14. GET AKS CREDENTIALS
+        // ============================================================
 
         stage('Get AKS Credentials') {
+
             steps {
+
                 bat '''
                 echo ========================================
                 echo Getting AKS Credentials
                 echo ========================================
 
                 az aks get-credentials ^
-                --resource-group YOUR_RESOURCE_GROUP ^
-                --name YOUR_AKS_CLUSTER ^
-                --overwrite-existing
+                  --resource-group %AKS_RESOURCE_GROUP% ^
+                  --name %AKS_CLUSTER_NAME% ^
+                  --overwrite-existing
 
                 echo.
                 echo ========================================
@@ -390,20 +440,28 @@ pipeline {
                 echo ========================================
 
                 kubectl config current-context
+
                 kubectl get nodes
                 '''
             }
-        }    
+        }
+
+
+        // ============================================================
+        // 15. DEPLOY TO AKS
+        // ============================================================
 
         stage('Deploy To AKS') {
 
             steps {
 
-                echo '========================================'
-                echo 'Deploying Application To AKS'
-                echo '========================================'
-
                 bat '''
+                echo ========================================
+                echo Deploying Application To AKS
+                echo IMAGE_TAG=%IMAGE_TAG%
+                echo ========================================
+
+
                 echo.
                 echo ========================================
                 echo Deploying Frontend
@@ -456,23 +514,27 @@ pipeline {
 
                 echo.
                 echo ========================================
-                echo Image Update Completed
+                echo IMAGE UPDATE COMPLETED
                 echo IMAGE_TAG=%IMAGE_TAG%
                 echo ========================================
                 '''
-
             }
-        }  
+        }
+
+
+        // ============================================================
+        // 16. WAIT FOR ROLLOUT
+        // ============================================================
 
         stage('Wait For Rollout') {
 
             steps {
 
-                echo '========================================'
-                echo 'Waiting For Kubernetes Rollout'
-                echo '========================================'
-
                 bat '''
+                echo ========================================
+                echo Waiting For Kubernetes Rollout
+                echo ========================================
+
                 kubectl rollout status deployment/frontend-deployment ^
                   -n %K8S_NAMESPACE% ^
                   --timeout=180s
@@ -492,20 +554,30 @@ pipeline {
                 kubectl rollout status deployment/services-deployment ^
                   -n %K8S_NAMESPACE% ^
                   --timeout=180s
-                '''
 
+                echo.
+                echo ========================================
+                echo ROLLOUT SUCCESSFUL
+                echo ========================================
+                '''
             }
-        }      
+        }
+
+
+        // ============================================================
+        // 17. VERIFY AKS DEPLOYMENT
+        // ============================================================
 
         stage('Verify AKS Deployment') {
 
             steps {
 
-                echo '========================================'
-                echo 'AKS Deployment Verification'
-                echo '========================================'
-
                 bat '''
+                echo ========================================
+                echo AKS DEPLOYMENT VERIFICATION
+                echo ========================================
+
+
                 echo.
                 echo ========================================
                 echo DEPLOYMENTS
@@ -513,6 +585,7 @@ pipeline {
 
                 kubectl get deployments ^
                   -n %K8S_NAMESPACE%
+
 
                 echo.
                 echo ========================================
@@ -523,6 +596,7 @@ pipeline {
                   -n %K8S_NAMESPACE% ^
                   -o wide
 
+
                 echo.
                 echo ========================================
                 echo SERVICES
@@ -531,10 +605,14 @@ pipeline {
                 kubectl get services ^
                   -n %K8S_NAMESPACE%
 
+
                 echo.
                 echo ========================================
                 echo CURRENT IMAGES
                 echo ========================================
+
+
+                echo FRONTEND IMAGE:
 
                 kubectl get deployment frontend-deployment ^
                   -n %K8S_NAMESPACE% ^
@@ -542,11 +620,17 @@ pipeline {
 
                 echo.
 
+
+                echo GATEWAY IMAGE:
+
                 kubectl get deployment gateway-deployment ^
                   -n %K8S_NAMESPACE% ^
                   -o jsonpath="{.spec.template.spec.containers[0].image}"
 
                 echo.
+
+
+                echo AUTH IMAGE:
 
                 kubectl get deployment auth-deployment ^
                   -n %K8S_NAMESPACE% ^
@@ -554,60 +638,81 @@ pipeline {
 
                 echo.
 
+
+                echo OFFERS IMAGE:
+
                 kubectl get deployment offers-deployment ^
                   -n %K8S_NAMESPACE% ^
                   -o jsonpath="{.spec.template.spec.containers[0].image}"
 
                 echo.
 
+
+                echo SERVICES IMAGE:
+
                 kubectl get deployment services-deployment ^
                   -n %K8S_NAMESPACE% ^
                   -o jsonpath="{.spec.template.spec.containers[0].image}"
 
                 echo.
+
+
                 echo ========================================
-                echo AKS Deployment Completed
+                echo DEPLOYMENT COMPLETED
                 echo IMAGE_TAG=%IMAGE_TAG%
                 echo ========================================
                 '''
-
             }
         }
 
-        post {
+    // ================================================================
+    // POST ACTIONS
+    // IMPORTANT: post is OUTSIDE stages
+    // ================================================================
 
-            success {
+    post {
 
-                echo '''
-                ========================================
-                PIPELINE SUCCESS
-                ========================================
-                Banking application deployed successfully.
-                '''
-            }
+        success {
 
-            failure {
+            echo '''
+            ========================================
+            PIPELINE SUCCESS
+            ========================================
 
-                    echo '''
-                    ========================================
-                    PIPELINE FAILED
-                    ========================================
-                    Check the failed stage and Jenkins console output.
-                    '''
-                }
+            Banking application deployed successfully.
 
-                always {
+            Docker Image:
+            v1.0.${BUILD_NUMBER}
 
-                    echo 'Cleaning temporary Docker resources...'
+            Kubernetes Namespace:
+            banking-app-dev
 
-                    bat '''
-                    docker container prune -f
-                    docker network prune -f
-                    docker builder prune -af
-                    '''
-                }
-            }
+            ========================================
+            '''
+        }
 
+        failure {
+
+            echo '''
+            ========================================
+            PIPELINE FAILED
+            ========================================
+
+            Check the failed stage and Jenkins console output.
+
+            ========================================
+            '''
+        }
+
+        always {
+
+            echo 'Cleaning temporary Docker resources...'
+
+            bat '''
+            docker container prune -f
+            docker network prune -f
+            docker builder prune -af
+            '''
+        }
     }
-
 }
