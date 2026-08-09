@@ -91,22 +91,39 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
-
+        stage('Verify Variables') {
             steps {
-                echo 'Building Docker Images with tag ${env.IMAGE_TAG}...'
+                bat '''
+                echo BUILD_NUMBER=%BUILD_NUMBER%
+                echo IMAGE_TAG=%IMAGE_TAG%
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo "Building Docker Images with tag ${IMAGE_TAG}..."
                 bat '''
                 echo IMAGE_TAG=%IMAGE_TAG%
                 docker compose build
                 '''
             }
-        }
+}
 
         stage('Verify Images') {
             steps {
                 bat '''
-                docker images
-               '''
+                echo ========================================
+                echo IMAGE TAG = %IMAGE_TAG%
+                echo ========================================    
+                docker compose config
+                echo.
+                echo ========================================
+                echo Docker Images
+                echo ========================================
+
+                docker images | findstr "bankingappacr123.azurecr.io"
+                '''
             }
         } 
 
@@ -141,7 +158,65 @@ pipeline {
         stage('Push Images To ACR') {
             steps {
                 bat '''
-                docker compose push
+                echo ========================================
+                echo Pushing Images To ACR
+                echo IMAGE_TAG=%IMAGE_TAG%
+                echo ========================================
+
+                docker push bankingappacr123.azurecr.io/banking-app-auth-service:%IMAGE_TAG%
+                if %ERRORLEVEL% neq 0 exit /b 1
+
+                docker push bankingappacr123.azurecr.io/banking-app-api-gateway:%IMAGE_TAG%
+                if %ERRORLEVEL% neq 0 exit /b 1
+
+                docker push bankingappacr123.azurecr.io/banking-app-offers-service:%IMAGE_TAG%
+                if %ERRORLEVEL% neq 0 exit /b 1
+
+                docker push bankingappacr123.azurecr.io/banking-app-services-service:%IMAGE_TAG%
+                if %ERRORLEVEL% neq 0 exit /b 1
+
+                docker push bankingappacr123.azurecr.io/banking-app-frontend:%IMAGE_TAG%
+                if %ERRORLEVEL% neq 0 exit /b 1
+
+                echo ========================================
+                echo All images pushed successfully
+                echo ========================================
+                '''
+            }
+        }
+
+        stage('Verify ACR Images') {
+            steps {
+                bat '''
+                echo ========================================
+                echo Verifying ACR Images
+                echo IMAGE_TAG=%IMAGE_TAG%
+                echo ========================================
+
+                az acr repository show-tags ^
+                --name bankingappacr123 ^
+                --repository banking-app-frontend ^
+                --output table
+
+                az acr repository show-tags ^
+                --name bankingappacr123 ^
+                --repository banking-app-api-gateway ^
+                --output table
+
+                az acr repository show-tags ^
+                --name bankingappacr123 ^
+                --repository banking-app-auth-service ^
+                --output table
+
+                az acr repository show-tags ^
+                --name bankingappacr123 ^
+                --repository banking-app-offers-service ^
+                --output table
+
+                az acr repository show-tags ^
+                --name bankingappacr123 ^
+                --repository banking-app-services-service ^
+                --output table
                 '''
             }
         }
