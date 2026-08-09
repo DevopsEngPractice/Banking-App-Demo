@@ -10,12 +10,12 @@ spec:
 
   selector:
     matchLabels:
-      app: offers-deployment
+      app: offers-service
 
   template:
     metadata:
       labels:
-        app: offers-deployment
+        app: offers-service
 
     spec:
       containers:
