@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 
 metadata:
-  name: services-service
+  name: services-svc
   namespace: banking-app-dev
 
 spec:

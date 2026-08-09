@@ -7,7 +7,7 @@ metadata:
 
 spec:
   selector:
-    app: offers-service
+    app: offers-deployment
 
   ports:
     - port: 5001

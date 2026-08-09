@@ -10,12 +10,12 @@ spec:
 
   selector:
     matchLabels:
-      app: auth-service
+      app: auth-deployment
 
   template:
     metadata:
       labels:
-        app: auth-service
+        app: auth-deployment
 
     spec:
       containers:
