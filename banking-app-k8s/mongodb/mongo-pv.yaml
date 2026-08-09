@@ -2,11 +2,11 @@ apiVersion: v1
 kind: PersistentVolume
 
 metadata:
-  name: auth-mongodb-pv
+  name: mongodb-pv
 
 spec:
   capacity:
-    storage: 5Gi
+    storage: 2Gi
 
   accessModes:
     - ReadWriteOnce
@@ -14,4 +14,4 @@ spec:
   persistentVolumeReclaimPolicy: Retain
 
   hostPath:
-    path: /data/mongodb/auth
+    path: /data/mongodb

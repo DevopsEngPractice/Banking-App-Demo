@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: services-deployment
+  namespace: banking-app-dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: services-dep
+  template:
+    metadata:
+      labels:
+        app: services-dep
+    spec:
+      containers:
+        - name: services-container
+          image: bankingappacr123.azurecr.io/banking-app-services-service:v1.0.${BUILD_NUMBER}
+          imagePullPolicy: Always
+
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: SERVICES_PORT
+
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: SERVICES_MONGO_URI
+                  
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

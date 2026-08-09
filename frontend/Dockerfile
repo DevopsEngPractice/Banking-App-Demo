@@ -6,19 +6,15 @@ COPY . .
 RUN npm run build
 
 FROM nginx:1.29-alpine
-WORKDIR /usr/share/nginx/html
-RUN rm -rf ./* \
- && sed -i 's/listen 80;/listen 8080;/' /etc/nginx/conf.d/default.conf \
- && touch /var/run/nginx.pid \
- && chown -R nginx:nginx /usr/share/nginx/html \
- && chown -R nginx:nginx /var/cache/nginx \
- && chown -R nginx:nginx /var/log/nginx \
- && chown -R nginx:nginx /etc/nginx/conf.d \
- && chown nginx:nginx /var/run/nginx.pid
 
-COPY --from=build /app/build .
+RUN rm -rf /usr/share/nginx/html/*
 
-USER nginx
+# Change Nginx port from 80 to 8080
+RUN sed -i 's/listen       80;/listen       8080;/' /etc/nginx/conf.d/default.conf \
+    && sed -i 's/listen  \[::\]:80;/listen  [::]:8080;/' /etc/nginx/conf.d/default.conf
+
+# Copy React production build
+COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 8080
 

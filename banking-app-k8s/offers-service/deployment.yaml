@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: offers-deployment
+  namespace: banking-app-dev
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: offers-service
+
+  template:
+    metadata:
+      labels:
+        app: offers-service
+
+    spec:
+      containers:
+        - name: offers-container
+
+          image: bankingappacr123.azurecr.io/banking-app-offers-service:v1.0.${BUILD_NUMBER}
+
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5001
+
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: OFFERS_PORT
+
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: OFFERS_MONGO_URI
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+
+            initialDelaySeconds: 10
+            periodSeconds: 5
