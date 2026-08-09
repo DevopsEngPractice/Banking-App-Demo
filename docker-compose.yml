@@ -1,5 +1,13 @@
 services:
 
+  mongodb:
+    image: mongo:8
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
   auth-service:
     image: bankingappacr123.azurecr.io/banking-app-auth-service:v1.0.${BUILD_NUMBER}
     build:
@@ -9,6 +17,8 @@ services:
       - "5001:5001"
     env_file:
       - ./backend/auth-service/.env
+    depends_on:
+      - mongodb
     restart: unless-stopped
 
   gateway:
@@ -35,6 +45,8 @@ services:
       - "5002:5002"
     env_file:
       - ./backend/offers-service/.env
+    depends_on:
+      - mongodb      
     restart: unless-stopped
 
   services-service:
@@ -46,6 +58,9 @@ services:
       - "5003:5003"
     env_file:
       - ./backend/services-service/.env
+
+    depends_on:
+      - mongodb      
     restart: unless-stopped
 
   frontend:
@@ -57,4 +72,7 @@ services:
       - "3000:8080"
     depends_on:
       - gateway
-    restart: unless-stopped
+    restart: unless-stopped 
+
+volumes:
+  mongodb_data:    
