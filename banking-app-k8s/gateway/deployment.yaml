@@ -8,7 +8,8 @@ metadata:
  
 spec:
   replicas: 2
-
+  revisionHistoryLimit: 3
+  
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -32,7 +33,7 @@ spec:
 
       containers:
         - name: gateway
-          image: bankingappacr123.azurecr.io/banking-app-gateway:latest
+          image: bankingappacr123.azurecr.io/banking-app-gateway:placeholder
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
