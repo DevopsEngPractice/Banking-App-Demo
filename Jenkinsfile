@@ -11,7 +11,7 @@ pipeline {
         ACR_NAME = 'bankingappacr123'
         ACR_LOGIN_SERVER = 'bankingappacr123.azurecr.io'
 
-        IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
+       IMAGE_TAG = "v1.0.${env.BUILD_NUMBER}"
 
         K8S_NAMESPACE = 'banking-app-dev'
 
@@ -131,12 +131,30 @@ pipeline {
                 echo BUILD_NUMBER=%BUILD_NUMBER%
                 echo IMAGE_TAG=%IMAGE_TAG%
 
+                if "%BUILD_NUMBER%"=="" (
+                    echo ERROR: BUILD_NUMBER is empty
+                    exit /b 1
+                )
+
                 if "%IMAGE_TAG%"=="" (
                     echo ERROR: IMAGE_TAG is empty
                     exit /b 1
                 )
 
-                echo IMAGE_TAG is valid
+                echo.
+                echo Expected image tag:
+                echo %IMAGE_TAG%
+
+                echo.
+                echo Expected Auth image:
+                echo %ACR_LOGIN_SERVER%/banking-app-auth-service:%IMAGE_TAG%
+
+                echo.
+                echo Expected Frontend image:
+                echo %ACR_LOGIN_SERVER%/banking-app-frontend:%IMAGE_TAG%
+
+                echo.
+                echo IMAGE_TAG validation successful
                 '''
             }
         }
@@ -151,8 +169,13 @@ pipeline {
                 echo ========================================
                 echo Building Docker Images
                 echo ========================================
-
+                
+                echo BUILD_NUMBER=%BUILD_NUMBER%
                 echo IMAGE_TAG=%IMAGE_TAG%
+
+                echo.
+                echo Docker Compose configuration:
+                docker compose config
 
                 docker compose build
 
