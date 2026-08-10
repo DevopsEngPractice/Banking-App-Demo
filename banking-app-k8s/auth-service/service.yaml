@@ -3,7 +3,7 @@ kind: Service
 
 metadata:
   name: auth-service
-  namespace: banking-app
+  namespace: banking-app-dev
 
 spec:
   selector:
