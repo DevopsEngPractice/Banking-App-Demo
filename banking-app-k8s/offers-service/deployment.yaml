@@ -21,7 +21,7 @@ spec:
       containers:
         - name: offers-service
 
-          image: bankingappacr123.azurecr.io/banking-app-offers-service:v1.0.${BUILD_NUMBER}
+          image: bankingappacr123.azurecr.io/banking-app-offers-service:latest
 
           imagePullPolicy: Always
 

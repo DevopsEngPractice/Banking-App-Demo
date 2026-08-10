@@ -32,7 +32,7 @@ spec:
 
       containers:
         - name: gateway
-          image: bankingappacr123.azurecr.io/banking-app-gateway:v1.0.${BUILD_NUMBER}
+          image: bankingappacr123.azurecr.io/banking-app-gateway:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 5000

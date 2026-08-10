@@ -21,7 +21,7 @@ spec:
       containers:
         - name: auth-service
 
-          image: bankingappacr123.azurecr.io/banking-app-auth-service:v1.0.${BUILD_NUMBER}
+          image: bankingappacr123.azurecr.io/banking-app-auth-service:latest
 
           imagePullPolicy: Always
 
