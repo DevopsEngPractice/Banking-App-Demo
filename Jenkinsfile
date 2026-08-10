@@ -406,8 +406,8 @@ pipeline {
                 echo Deploying Auth Service
                 echo ========================================
 
-                kubectl set image deployment/auth-deployment ^
-                  auth-service=%ACR_LOGIN_SERVER%/banking-app-auth-service:%IMAGE_TAG% ^
+                kubectl set image deployment/auth-service-deployment ^
+                  auth-container=%ACR_LOGIN_SERVER%/banking-app-auth-service:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
 
 
@@ -417,7 +417,7 @@ pipeline {
                 echo ========================================
 
                 kubectl set image deployment/offers-deployment ^
-                  offers-service=%ACR_LOGIN_SERVER%/banking-app-offers-service:%IMAGE_TAG% ^
+                  offers-container=%ACR_LOGIN_SERVER%/banking-app-offers-service:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
 
 
@@ -427,7 +427,7 @@ pipeline {
                 echo ========================================
 
                 kubectl set image deployment/services-deployment ^
-                  services-service=%ACR_LOGIN_SERVER%/banking-app-services-service:%IMAGE_TAG% ^
+                  services-container=%ACR_LOGIN_SERVER%/banking-app-services-service:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
 
 
