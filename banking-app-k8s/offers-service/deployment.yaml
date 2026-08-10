@@ -8,6 +8,13 @@ metadata:
 spec:
   replicas: 2
 
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
   selector:
     matchLabels:
       app: offers-service
@@ -21,7 +28,7 @@ spec:
       containers:
         - name: offers-service
 
-          image: bankingappacr123.azurecr.io/banking-app-offers-service:latest
+          image: bankingappacr123.azurecr.io/banking-app-offers-service:placeholder
 
           imagePullPolicy: Always
 
