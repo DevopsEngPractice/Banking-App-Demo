@@ -413,6 +413,7 @@ pipeline {
                   frontend=%ACR_LOGIN_SERVER%/banking-app-frontend:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
 
+                if %ERRORLEVEL% neq 0 exit /b 1
 
                 echo.
                 echo ========================================
@@ -422,17 +423,19 @@ pipeline {
                 kubectl set image deployment/gateway-deployment ^
                   gateway=%ACR_LOGIN_SERVER%/banking-app-api-gateway:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
-
+                
+                if %ERRORLEVEL% neq 0 exit /b 1
 
                 echo.
                 echo ========================================
                 echo Deploying Auth Service
                 echo ========================================
 
-                kubectl set image deployment/auth-service-deployment ^
+                kubectl set image deployment/auth-deployment ^
                   auth-container=%ACR_LOGIN_SERVER%/banking-app-auth-service:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
-
+                
+                if %ERRORLEVEL% neq 0 exit /b 1
 
                 echo.
                 echo ========================================
@@ -440,9 +443,10 @@ pipeline {
                 echo ========================================
 
                 kubectl set image deployment/offers-deployment ^
-                  offers-container=%ACR_LOGIN_SERVER%/banking-app-offers-service:%IMAGE_TAG% ^
+                  offers-service=%ACR_LOGIN_SERVER%/banking-app-offers-service:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
-
+                
+                if %ERRORLEVEL% neq 0 exit /b 1
 
                 echo.
                 echo ========================================
@@ -452,7 +456,8 @@ pipeline {
                 kubectl set image deployment/services-deployment ^
                   services-container=%ACR_LOGIN_SERVER%/banking-app-services-service:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
-
+                
+                if %ERRORLEVEL% neq 0 exit /b 1
 
                 echo.
                 echo ========================================
