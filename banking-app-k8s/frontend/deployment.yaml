@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: bankingappacr123.azurecr.io/banking-app-frontend:latest
+          image: bankingappacr123.azurecr.io/banking-app-frontend:placeholder
           ports:
             - containerPort: 8080
 
@@ -40,4 +40,12 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
+
+          resources:
+            requests:
+              memory: "250Mi"
+              cpu: "250m"
+            limits:
+              memory: "500Mi"
+              cpu: "500m"
     
