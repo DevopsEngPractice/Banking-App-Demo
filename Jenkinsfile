@@ -481,21 +481,31 @@ pipeline {
                   -n %K8S_NAMESPACE% ^
                   --timeout=180s
 
+                if errorlevel 1 exit /b 1
+
                 kubectl rollout status deployment/gateway-deployment ^
                   -n %K8S_NAMESPACE% ^
                   --timeout=180s
+
+                if errorlevel 1 exit /b 1
 
                 kubectl rollout status deployment/auth-deployment ^
                   -n %K8S_NAMESPACE% ^
                   --timeout=180s
 
+                if errorlevel 1 exit /b 1
+
                 kubectl rollout status deployment/offers-deployment ^
                   -n %K8S_NAMESPACE% ^
                   --timeout=180s
 
+                if errorlevel 1 exit /b 1
+
                 kubectl rollout status deployment/services-deployment ^
                   -n %K8S_NAMESPACE% ^
                   --timeout=180s
+
+                if errorlevel 1 exit /b 1
 
                 echo.
                 echo ========================================
