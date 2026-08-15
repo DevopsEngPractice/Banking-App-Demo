@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: banking-app-resource-quota
+  namespace: banking-app-dev
+
+spec:
+  hard:
+    requests.cpu: "3"
+    requests.memory: "4Gi"
+
+    limits.cpu: "6"
+    limits.memory: "8Gi"
+
+    pods: "15"
