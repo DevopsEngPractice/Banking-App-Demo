@@ -1,6 +1,5 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: mongodb
   namespace: banking-app-dev
@@ -20,8 +19,7 @@ spec:
     spec:
       containers:
         - name: mongodb
-
-          image: mongo:8
+          image: mongo:8.0
 
           ports:
             - containerPort: 27017
@@ -38,6 +36,14 @@ spec:
                 secretKeyRef:
                   name: mongo-secret
                   key: mongo-root-password
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
 
           volumeMounts:
             - name: mongodb-storage
