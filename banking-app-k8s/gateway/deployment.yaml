@@ -62,6 +62,12 @@ spec:
                 name: banking-app-config
                 key: SERVICES_SERVICE_URL
 
+          - name: CLIENT_URL
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: CLIENT_URL
+
           resources:
             requests:
               memory: "128Mi"

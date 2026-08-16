@@ -3,6 +3,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY . .
-USER node
+USER 1000
 EXPOSE 5002
 CMD ["node", "server.js"]
