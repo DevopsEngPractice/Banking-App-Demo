@@ -60,7 +60,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 5001
+              port: 5002
 
             initialDelaySeconds: 30
             periodSeconds: 10
@@ -68,7 +68,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health
-              port: 5001
+              port: 5002
 
             initialDelaySeconds: 10
             periodSeconds: 5
