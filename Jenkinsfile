@@ -543,7 +543,6 @@ pipeline {
                   -n %K8S_NAMESPACE% ^
                   -o wide
 
-
                 echo.
                 echo ========================================
                 echo SERVICES
@@ -552,12 +551,10 @@ pipeline {
                 kubectl get services ^
                   -n %K8S_NAMESPACE%
 
-
                 echo.
                 echo ========================================
                 echo CURRENT IMAGES
                 echo ========================================
-
 
                 echo FRONTEND IMAGE:
 
@@ -567,7 +564,6 @@ pipeline {
 
                 echo.
 
-
                 echo GATEWAY IMAGE:
 
                 kubectl get deployment gateway-deployment ^
@@ -575,7 +571,6 @@ pipeline {
                   -o jsonpath="{.spec.template.spec.containers[0].image}"
 
                 echo.
-
 
                 echo AUTH IMAGE:
 
@@ -585,7 +580,6 @@ pipeline {
 
                 echo.
 
-
                 echo OFFERS IMAGE:
 
                 kubectl get deployment offers-deployment ^
@@ -594,7 +588,6 @@ pipeline {
 
                 echo.
 
-
                 echo SERVICES IMAGE:
 
                 kubectl get deployment services-deployment ^
@@ -602,7 +595,6 @@ pipeline {
                   -o jsonpath="{.spec.template.spec.containers[0].image}"
 
                 echo.
-
 
                 echo ========================================
                 echo DEPLOYMENT COMPLETED
