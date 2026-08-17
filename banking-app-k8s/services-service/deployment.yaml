@@ -27,6 +27,9 @@ spec:
           image: bankingappacr123.azurecr.io/banking-app-services-service:placeholder
           imagePullPolicy: Always
 
+          ports:
+            - containerPort: 5003          
+
           env:
             - name: PORT
               valueFrom:
