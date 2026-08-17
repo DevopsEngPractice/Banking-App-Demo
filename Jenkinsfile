@@ -248,7 +248,6 @@ pipeline {
                 }
             }
         }
-
         stage('ACR Login') {
 
             steps {
