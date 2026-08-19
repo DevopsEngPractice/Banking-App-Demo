@@ -8,33 +8,58 @@ pr:
     include:
       - main
 
-variables:
-
-  # Azure
-  azureServiceConnection: 'svc-azure-banking-dev'
-  azureSubscription: '$(azureServiceConnection)'
-
-  # Key Vault
-  keyVaultName: 'banking-app-keyvault'
-
-  # ACR
-  acrName: 'bankingappacr123'
-  acrLoginServer: 'bankingappacr123.azurecr.io'
-  dockerRegistryServiceConnection: 'AzurepipelinetoAcr'
-
-  # AKS
-  aksResourceGroup: 'RG-01'
-  aksClusterName: 'Banking-App-Cluster'
-  kubernetesNamespace: 'banking-app-dev'
-
-  # Image tag
-  imageTag: 'v1.0.$(Build.BuildId)'
-
 pool:
   vmImage: 'ubuntu-latest'
 
-
 stages:
+
+- stage: TestTrigger
+  displayName: 'Test Azure Pipeline Trigger'
+
+  jobs:
+
+  - job: Test
+    displayName: 'Test Pipeline'
+
+    steps:
+
+    - checkout: self
+
+    - script: |
+        echo "======================================"
+        echo "Azure Pipeline Started Successfully"
+        echo "======================================"
+        echo "Branch: $(Build.SourceBranch)"
+        echo "Commit: $(Build.SourceVersion)"
+      displayName: 'Verify Pipeline Trigger'      
+
+# variables:
+
+#   # Azure
+#   azureServiceConnection: 'svc-azure-banking-dev'
+#   azureSubscription: '$(azureServiceConnection)'
+
+#   # Key Vault
+#   keyVaultName: 'banking-app-keyvault'
+
+#   # ACR
+#   acrName: 'bankingappacr123'
+#   acrLoginServer: 'bankingappacr123.azurecr.io'
+#   dockerRegistryServiceConnection: 'AzurepipelinetoAcr'
+
+#   # AKS
+#   aksResourceGroup: 'RG-01'
+#   aksClusterName: 'Banking-App-Cluster'
+#   kubernetesNamespace: 'banking-app-dev'
+
+#   # Image tag
+#   imageTag: 'v1.0.$(Build.BuildId)'
+
+# pool:
+#   vmImage: 'ubuntu-latest'
+
+
+# stages:
 
 # ============================================================
 # STAGE 1 - BUILD
