@@ -12,6 +12,7 @@ variables:
 
   # Azure
   azureServiceConnection: 'svc-azure-banking-dev'
+  azureSubscription: '$(azureServiceConnection)'
 
   # Key Vault
   keyVaultName: 'banking-app-keyvault'
@@ -19,7 +20,7 @@ variables:
   # ACR
   acrName: 'bankingappacr123'
   acrLoginServer: 'bankingappacr123.azurecr.io'
-  # dockerRegistryServiceConnection: 'AzurepipelinetoAcr'
+  dockerRegistryServiceConnection: 'AzurepipelinetoAcr'
 
   # AKS
   aksResourceGroup: 'RG-01'
@@ -154,7 +155,7 @@ stages:
     - task: Docker@2
       displayName: 'Build and Push Auth Service'
       inputs:
-        containerRegistry: '$(azureServiceConnection)'
+        containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-auth-service'
         command: 'buildAndPush'
         Dockerfile: '$(Build.SourcesDirectory)/backend/auth-service/Dockerfile'
@@ -170,7 +171,7 @@ stages:
     - task: Docker@2
       displayName: 'Build and Push API Gateway'
       inputs:
-        containerRegistry: '$(azureServiceConnection)'
+        containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-api-gateway'
         command: 'buildAndPush'
         Dockerfile: '$(Build.SourcesDirectory)/backend/gateway/Dockerfile'
@@ -186,7 +187,7 @@ stages:
     - task: Docker@2
       displayName: 'Build and Push Offers Service'
       inputs:
-        containerRegistry: '$(azureServiceConnection)'
+        containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-offers-service'
         command: 'buildAndPush'
         Dockerfile: '$(Build.SourcesDirectory)/backend/offers-service/Dockerfile'
@@ -202,7 +203,7 @@ stages:
     - task: Docker@2
       displayName: 'Build and Push Services Service'
       inputs:
-        containerRegistry: '$(azureServiceConnection)'
+        containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-services-service'
         command: 'buildAndPush'
         Dockerfile: '$(Build.SourcesDirectory)/backend/services-service/Dockerfile'
@@ -218,7 +219,7 @@ stages:
     - task: Docker@2
       displayName: 'Build and Push Frontend'
       inputs:
-        containerRegistry: '$(azureServiceConnection)'
+        containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-frontend'
         command: 'buildAndPush'
         Dockerfile: '$(Build.SourcesDirectory)/frontend/Dockerfile'
