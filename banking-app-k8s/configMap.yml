@@ -12,7 +12,7 @@ data:
   OFFERS_SERVICE_URL: "http://offers-service:5002"
 
   SERVICES_PORT: "5003"
-  SERVICES_SERVICE_URL: "http://services-svc:5003"
+  SERVICES_SERVICE_URL: "http://services-service:5003"
 
   GATEWAY_PORT: "5000"
 

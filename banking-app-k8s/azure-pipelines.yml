@@ -1,0 +1,450 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+
+  # Azure
+  azureServiceConnection: 'svc-azure-banking-dev'
+
+  # Key Vault
+  keyVaultName: 'banking-app-keyvault'
+
+  # ACR
+  acrName: 'bankingappacr123'
+  acrLoginServer: 'bankingappacr123.azurecr.io'
+  # dockerRegistryServiceConnection: 'AzurepipelinetoAcr'
+
+  # AKS
+  aksResourceGroup: 'RG-01'
+  aksClusterName: 'Banking-App-Cluster'
+  kubernetesNamespace: 'banking-app-dev'
+
+  # Image tag
+  imageTag: 'v1.0.$(Build.BuildId)'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+
+stages:
+
+# ============================================================
+# STAGE 1 - BUILD
+# ============================================================
+
+- stage: Build
+  displayName: 'Build Application'
+
+  jobs:
+
+  - job: BuildApplication
+    displayName: 'Build and Test'
+
+    steps:
+
+    - checkout: self
+      displayName: 'Checkout GitHub Repository'
+
+
+    # --------------------------------------------------------
+    # Node setup
+    # --------------------------------------------------------
+
+    - task: NodeTool@0
+      displayName: 'Install Node.js'
+      inputs:
+        versionSpec: '22.0'
+
+
+    # --------------------------------------------------------
+    # Frontend build
+    # --------------------------------------------------------
+
+    - script: |
+        cd frontend
+
+        npm ci
+
+        npm run build
+      displayName: 'Build Frontend'
+
+
+    # --------------------------------------------------------
+    # Auth service
+    # --------------------------------------------------------
+
+    - script: |
+        cd backend/auth-service
+
+        npm ci
+
+        npm test --if-present
+      displayName: 'Build/Test Auth Service'
+
+
+    # --------------------------------------------------------
+    # Gateway
+    # --------------------------------------------------------
+
+    - script: |
+        cd backend/gateway
+
+        npm ci
+
+        npm test --if-present
+      displayName: 'Build/Test Gateway'
+
+
+    # --------------------------------------------------------
+    # Offers
+    # --------------------------------------------------------
+
+    - script: |
+        cd backend/offers-service
+
+        npm ci
+
+        npm test --if-present
+      displayName: 'Build/Test Offers Service'
+
+
+    # --------------------------------------------------------
+    # Services
+    # --------------------------------------------------------
+
+    - script: |
+        cd backend/services-service
+
+        npm ci
+
+        npm test --if-present
+      displayName: 'Build/Test Services Service'
+
+
+# ============================================================
+# STAGE 2 - DOCKER BUILD + PUSH
+# ============================================================
+
+- stage: Docker
+  displayName: 'Build and Push Docker Images'
+
+  dependsOn: Build
+
+  jobs:
+
+  - job: DockerBuildPush
+    displayName: 'Build and Push Images'
+
+    steps:
+
+    - checkout: self
+
+
+    # --------------------------------------------------------
+    # Login + Build + Push AUTH
+    # --------------------------------------------------------
+
+    - task: Docker@2
+      displayName: 'Build and Push Auth Service'
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: 'banking-app-auth-service'
+        command: 'buildAndPush'
+        Dockerfile: '$(Build.SourcesDirectory)/backend/auth-service/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)/backend/auth-service'
+        tags: |
+          $(imageTag)
+
+
+    # --------------------------------------------------------
+    # Gateway
+    # --------------------------------------------------------
+
+    - task: Docker@2
+      displayName: 'Build and Push API Gateway'
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: 'banking-app-api-gateway'
+        command: 'buildAndPush'
+        Dockerfile: '$(Build.SourcesDirectory)/backend/gateway/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)/backend/gateway'
+        tags: |
+          $(imageTag)
+
+
+    # --------------------------------------------------------
+    # Offers
+    # --------------------------------------------------------
+
+    - task: Docker@2
+      displayName: 'Build and Push Offers Service'
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: 'banking-app-offers-service'
+        command: 'buildAndPush'
+        Dockerfile: '$(Build.SourcesDirectory)/backend/offers-service/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)/backend/offers-service'
+        tags: |
+          $(imageTag)
+
+
+    # --------------------------------------------------------
+    # Services
+    # --------------------------------------------------------
+
+    - task: Docker@2
+      displayName: 'Build and Push Services Service'
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: 'banking-app-services-service'
+        command: 'buildAndPush'
+        Dockerfile: '$(Build.SourcesDirectory)/backend/services-service/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)/backend/services-service'
+        tags: |
+          $(imageTag)
+
+
+    # --------------------------------------------------------
+    # Frontend
+    # --------------------------------------------------------
+
+    - task: Docker@2
+      displayName: 'Build and Push Frontend'
+      inputs:
+        containerRegistry: '$(azureServiceConnection)'
+        repository: 'banking-app-frontend'
+        command: 'buildAndPush'
+        Dockerfile: '$(Build.SourcesDirectory)/frontend/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)/frontend'
+        tags: |
+          $(imageTag)
+
+
+# ============================================================
+# STAGE 3 - DEPLOY
+# ============================================================
+
+- stage: Deploy
+  displayName: 'Deploy to AKS'
+
+  dependsOn: Docker
+
+  jobs:
+
+  - deployment: DeployToAKS
+
+    displayName: 'Deploy Banking Application'
+
+    environment: 'banking-app-dev'
+
+    strategy:
+
+      runOnce:
+
+        deploy:
+
+          steps:
+
+          - checkout: self
+
+
+          # --------------------------------------------------
+          # Get Key Vault secrets
+          # --------------------------------------------------
+
+          - task: AzureKeyVault@2
+            displayName: 'Load Secrets from Azure Key Vault'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              KeyVaultName: '$(keyVaultName)'
+              SecretsFilter: '*'
+              RunAsPreJob: false
+
+
+          # --------------------------------------------------
+          # Get AKS credentials
+          # --------------------------------------------------
+
+          - task: AzureCLI@2
+            displayName: 'Get AKS Credentials'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+
+                az aks get-credentials \
+                  --resource-group "$(aksResourceGroup)" \
+                  --name "$(aksClusterName)" \
+                  --overwrite-existing
+
+                kubectl config current-context
+
+                kubectl get nodes
+
+
+          # --------------------------------------------------
+          # Create/update namespace
+          # --------------------------------------------------
+
+          - task: AzureCLI@2
+            displayName: 'Create Kubernetes Namespace'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+
+                kubectl create namespace "$(kubernetesNamespace)" \
+                  --dry-run=client \
+                  -o yaml | kubectl apply -f -
+
+
+          # --------------------------------------------------
+          # Apply ConfigMap
+          # --------------------------------------------------
+
+          - task: AzureCLI@2
+            displayName: 'Apply ConfigMap'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+
+                kubectl apply \
+                  -f k8s/configmap.yaml \
+                  -n "$(kubernetesNamespace)"
+
+
+          # --------------------------------------------------
+          # Update application images
+          # --------------------------------------------------
+
+          - task: AzureCLI@2
+            displayName: 'Update AKS Images'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+
+                echo "Deploying IMAGE TAG:"
+                echo "$(imageTag)"
+
+                kubectl set image deployment/frontend-deployment \
+                  frontend=$(acrLoginServer)/banking-app-frontend:$(imageTag) \
+                  -n "$(kubernetesNamespace)"
+
+                kubectl set image deployment/gateway-deployment \
+                  gateway=$(acrLoginServer)/banking-app-api-gateway:$(imageTag) \
+                  -n "$(kubernetesNamespace)"
+
+                kubectl set image deployment/auth-deployment \
+                  auth-service=$(acrLoginServer)/banking-app-auth-service:$(imageTag) \
+                  -n "$(kubernetesNamespace)"
+
+                kubectl set image deployment/offers-deployment \
+                  offers-service=$(acrLoginServer)/banking-app-offers-service:$(imageTag) \
+                  -n "$(kubernetesNamespace)"
+
+                kubectl set image deployment/services-deployment \
+                  services-service=$(acrLoginServer)/banking-app-services-service:$(imageTag) \
+                  -n "$(kubernetesNamespace)"
+
+
+          # --------------------------------------------------
+          # Wait for rollout
+          # --------------------------------------------------
+
+          - task: AzureCLI@2
+            displayName: 'Wait for AKS Rollout'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+
+                kubectl rollout status \
+                  deployment/frontend-deployment \
+                  -n "$(kubernetesNamespace)" \
+                  --timeout=180s
+
+                kubectl rollout status \
+                  deployment/gateway-deployment \
+                  -n "$(kubernetesNamespace)" \
+                  --timeout=180s
+
+                kubectl rollout status \
+                  deployment/auth-deployment \
+                  -n "$(kubernetesNamespace)" \
+                  --timeout=180s
+
+                kubectl rollout status \
+                  deployment/offers-deployment \
+                  -n "$(kubernetesNamespace)" \
+                  --timeout=180s
+
+                kubectl rollout status \
+                  deployment/services-deployment \
+                  -n "$(kubernetesNamespace)" \
+                  --timeout=180s
+
+
+          # --------------------------------------------------
+          # Verification
+          # --------------------------------------------------
+
+          - task: AzureCLI@2
+            displayName: 'Verify AKS Deployment'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+
+                echo "========================================"
+                echo "DEPLOYMENTS"
+                echo "========================================"
+
+                kubectl get deployments \
+                  -n "$(kubernetesNamespace)"
+
+
+                echo "========================================"
+                echo "PODS"
+                echo "========================================"
+
+                kubectl get pods \
+                  -n "$(kubernetesNamespace)" \
+                  -o wide
+
+
+                echo "========================================"
+                echo "SERVICES"
+                echo "========================================"
+
+                kubectl get services \
+                  -n "$(kubernetesNamespace)"
+
+
+                echo "========================================"
+                echo "CURRENT IMAGES"
+                echo "========================================"
+
+                kubectl get deployments \
+                  -n "$(kubernetesNamespace)" \
+                  -o custom-columns='NAME:.metadata.name,IMAGE:.spec.template.spec.containers[*].image'
+
+
+                echo "========================================"
+                echo "DEPLOYMENT COMPLETED"
+                echo "IMAGE TAG: $(imageTag)"
+                echo "========================================"
