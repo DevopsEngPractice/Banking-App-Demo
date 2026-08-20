@@ -39,11 +39,12 @@ spec:
 
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              cpu: "50m"
+              memory: "64Mi"
+
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              cpu: "250m"
+              memory: "256Mi"
 
           volumeMounts:
             - name: mongodb-storage
