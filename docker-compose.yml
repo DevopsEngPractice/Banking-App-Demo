@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: bankingappacr123.azurecr.io/banking-app-api-gateway:${IMAGE_TAG:-local}
+    image: bankingappacr123.azurecr.io/banking-app-gateway:${IMAGE_TAG:-local}
     build:
       context: ./backend/gateway
     container_name: api-gateway

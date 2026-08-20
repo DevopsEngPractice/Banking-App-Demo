@@ -300,7 +300,7 @@ pipeline {
                 docker push %ACR_LOGIN_SERVER%/banking-app-auth-service:%IMAGE_TAG%
                 if %ERRORLEVEL% neq 0 exit /b 1
 
-                docker push %ACR_LOGIN_SERVER%/banking-app-api-gateway:%IMAGE_TAG%
+                docker push %ACR_LOGIN_SERVER%/banking-app-gateway:%IMAGE_TAG%
                 if %ERRORLEVEL% neq 0 exit /b 1
 
                 docker push %ACR_LOGIN_SERVER%/banking-app-offers-service:%IMAGE_TAG%
@@ -339,7 +339,7 @@ pipeline {
 
                 az acr repository show-tags ^
                   --name %ACR_NAME% ^
-                  --repository banking-app-api-gateway ^
+                  --repository banking-app-gateway ^
                   --output table
 
                 echo.
@@ -420,7 +420,7 @@ pipeline {
                 echo ========================================
 
                 kubectl set image deployment/gateway-deployment ^
-                  gateway=%ACR_LOGIN_SERVER%/banking-app-api-gateway:%IMAGE_TAG% ^
+                  gateway=%ACR_LOGIN_SERVER%/banking-app-gateway:%IMAGE_TAG% ^
                   -n %K8S_NAMESPACE%
                 
                 if %ERRORLEVEL% neq 0 exit /b 1
