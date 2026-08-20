@@ -51,7 +51,7 @@ stages:
     steps:
 
     - checkout: self
-      displayName: 'Checkout GitHub Repository'
+      displayName: 'Checkout GitHub Repository.'
 
 
     # --------------------------------------------------------
