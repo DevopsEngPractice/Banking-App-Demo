@@ -11,7 +11,7 @@ pr:
 variables:
 
   # Azure
-  azureServiceConnection: 'svc-azure-banking-dev'
+  azureServiceConnection: 'AzureDevops_AzurePortal'
   azureSubscription: '$(azureServiceConnection)'
 
   # Key Vault
@@ -20,7 +20,7 @@ variables:
   # ACR
   acrName: 'bankingappacr123'
   acrLoginServer: 'bankingappacr123.azurecr.io'
-  dockerRegistryServiceConnection: 'Azure-to-ACR-connection'
+  dockerRegistryServiceConnection: 'AzurePipelines_AzureContainer'
 
   # AKS
   aksResourceGroup: 'RG-01'
