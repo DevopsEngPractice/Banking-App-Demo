@@ -20,7 +20,7 @@ variables:
   # ACR
   acrName: 'bankingappacr123'
   acrLoginServer: 'bankingappacr123.azurecr.io'
-  dockerRegistryServiceConnection: 'AzurepipelinetoAcr'
+  dockerRegistryServiceConnection: 'Azure-to-ACR-connection'
 
   # AKS
   aksResourceGroup: 'RG-01'
