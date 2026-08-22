@@ -15,7 +15,7 @@ variables:
   azureSubscription: '$(azureServiceConnection)'
 
   # Key Vault
-  keyVaultName: 'banking-app-keyvault'
+  keyVaultName: 'bankingApp-Key-Vault'
 
   # ACR
   acrName: 'bankingappacr123'
