@@ -220,12 +220,16 @@ stages:
 
     - script: |
         set -e
-        docker buildx create --use --name multiarch-builder || docker buildx use multiarch-builder
-        docker buildx build --platform linux/amd64,linux/arm64 \
-          -f $(Build.SourcesDirectory)/backend/offers-service/Dockerfile \
-          -t $(acrLoginServer)/banking-app-offers-service:$(imageTag) \
-          --push \
-          $(Build.SourcesDirectory)/backend/offers-service
+        docker buildx create --use --name multiarch-builder 2>/dev/null || docker buildx use multiarch-builder
+        for i in 1 2 3; do
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f $(Build.SourcesDirectory)/backend/offers-service/Dockerfile \
+            -t $(acrLoginServer)/banking-app-offers-service:$(imageTag) \
+            --push \
+            $(Build.SourcesDirectory)/backend/offers-service && break
+          echo "Push attempt $i failed, retrying in 15s..."
+          sleep 15
+        done
       displayName: 'Build and Push Offers Service (multi-arch)'
 
         # Dockerfile: '$(Build.SourcesDirectory)/backend/offers-service/Dockerfile'
