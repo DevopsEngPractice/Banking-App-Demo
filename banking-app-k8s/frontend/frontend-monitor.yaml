@@ -1,18 +1,18 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: services-service-monitor
+  name: frontend-monitor
   namespace: banking-app-dev # Keep it inside your application namespace
   labels:
     release: prometheus # MATCHES YOUR HELM DEPLOYMENT
 spec:
   selector:
     matchLabels:
-      app: services-service # Matches the label defined on your Kubernetes Service
+      app: frontend # Matches the label defined on your Kubernetes Service
   namespaceSelector:
     matchNames:
       - banking-app-dev # Tells Prometheus to look outside its own namespace
   endpoints:
-    - port: services-service # Matches the name of the port in your Kubernetes Service
+    - port: frontend # Matches the name of the port in your Kubernetes Service
       interval: 15s # How frequently Prometheus scrapes metrics
-      path: /metrics/services # The endpoint path we exposed in Step 1
+      path: /metrics/fronted # The endpoint path we exposed in Step 1

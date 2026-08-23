@@ -4,13 +4,16 @@ kind: Service
 metadata:
   name: frontend-service
   namespace: banking-app-dev
+  labels: 
+    app: frontend
 
 spec:
   selector:
     app: frontend
 
   ports:
-    - port: 80
+    - name: frontend
+      port: 80
       targetPort: 8080
 
   type: LoadBalancer

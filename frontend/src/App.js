@@ -15,6 +15,12 @@ import Profile from './pages/Profile';
 import AdminUsers from './pages/AdminUsers';
 import NotFound from './pages/NotFound';
 
+import {meter} from "./metrics";
+
+const buttonClickCounter = meter.createCounter('frontend_button_clicks', {
+  description: 'Counts the number of button clicks',
+});
+
 function App() {
   return (
     <AuthProvider>
