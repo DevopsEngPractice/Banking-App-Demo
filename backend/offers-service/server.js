@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const offerRoutes = require('./routes/offerRoutes');
 const Offer = require('./models/Offer');
 
+const client = require("prom-client");
+
 const app = express();
 
 connectDB();
@@ -12,11 +14,19 @@ connectDB();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({register: client.register, timeout: 5000});
+
 app.get('/health', (req, res) => {
   res.status(200).json({ service: 'offers-service', status: 'OK', timestamp: new Date().toISOString() });
 });
 
 app.use('/api/offers', offerRoutes);
+
+app.get("/metrics/offers", async(req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+})
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found on offers-service' });

@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const User = require('./models/User');
 
+const client = require("prom-client");
+
 const app = express();
 
 connectDB();
@@ -12,9 +14,17 @@ connectDB();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({register: client.register, timeout: 5000});
+
 app.get('/health', (req, res) => {
   res.status(200).json({ service: 'auth-service', status: 'OK', timestamp: new Date().toISOString() });
 });
+
+app.get("/metrics/auth", async(req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+})
 
 app.use((req, res, next) => {
     console.log("================================");

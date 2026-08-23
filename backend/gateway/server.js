@@ -3,14 +3,24 @@ const express = require('express');
 const cors = require('cors');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
+const client = require("prom-client");
+
 const app = express();
 
 app.use(cors({ origin: '*' }));
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({register: client.register, timeout: 5000});
 
 // Gateway health check (does not need JSON body parsing / proxy handles its own body)
 app.get('/health', (req, res) => {
   res.status(200).json({ service: 'api-gateway', status: 'OK', timestamp: new Date().toISOString() });
 });
+
+app.get("/metrics/gateway", async(req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+})
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
 const OFFERS_SERVICE_URL = process.env.OFFERS_SERVICE_URL || 'http://localhost:5002';

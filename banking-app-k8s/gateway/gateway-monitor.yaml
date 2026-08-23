@@ -1,0 +1,18 @@
+apiVersion: ://coreos.com
+kind: ServiceMonitor
+metadata:
+  name: gateway-monitor
+  namespace: banking-app-dev # Keep it inside your application namespace
+  labels:
+    release: prometheus # MATCHES YOUR HELM DEPLOYMENT
+spec:
+  selector:
+    matchLabels:
+      app: gateway # Matches the label defined on your Kubernetes Service
+  namespaceSelector:
+    matchNames:
+      - banking-app-dev # Tells Prometheus to look outside its own namespace
+  endpoints:
+    - port: gateway # Matches the name of the port in your Kubernetes Service
+      interval: 15s # How frequently Prometheus scrapes metrics
+      path: /metrics/gateway # The endpoint path we exposed in Step 1

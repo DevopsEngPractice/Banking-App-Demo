@@ -4,13 +4,16 @@ kind: Service
 metadata:
   name: offers-service
   namespace: banking-app-dev
+  labels: 
+    app: offers-service
 
 spec:
   selector:
     app: offers-service
 
   ports:
-    - port: 5002
+    - name: offers-service
+      port: 5002
       targetPort: 5002
 
   type: ClusterIP

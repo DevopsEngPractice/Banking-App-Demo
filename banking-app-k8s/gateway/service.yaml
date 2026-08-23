@@ -3,20 +3,17 @@ kind: Service
 
 metadata:
   name: gateway
-
   namespace: banking-app-dev
+  labels:
+    app: gateway
 
 spec:
-
   type: ClusterIP
-
   selector:
     app: gateway
 
   ports:
-
-  - port: 5000
-
+  - name: gateway
+    port: 5000
     targetPort: 5000
-
     protocol: TCP
