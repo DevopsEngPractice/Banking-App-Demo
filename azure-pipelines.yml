@@ -147,21 +147,38 @@ stages:
 
     - checkout: self
 
+    - task: Docker@2
+      displayName: 'Docker Login to ACR'
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        command: 'login'
 
     # --------------------------------------------------------
     # Login + Build + Push AUTH
     # --------------------------------------------------------
 
-    - task: Docker@2
-      displayName: 'Build and Push Auth Service'
-      inputs:
-        containerRegistry: '$(dockerRegistryServiceConnection)'
-        repository: 'banking-app-auth-service'
-        command: 'buildAndPush'
-        Dockerfile: '$(Build.SourcesDirectory)/backend/auth-service/Dockerfile'
-        buildContext: '$(Build.SourcesDirectory)/backend/auth-service'
-        tags: |
-          $(imageTag)
+    # - task: Docker@2
+    #   displayName: 'Build and Push Auth Service'
+    #   inputs:
+    #     containerRegistry: '$(dockerRegistryServiceConnection)'
+    #     repository: 'banking-app-auth-service'
+    #     command: 'buildAndPush'
+
+    - script: |
+        set -e
+        docker buildx create --use --name multiarch-builder || docker buildx use multiarch-builder
+        docker buildx build --platform linux/amd64,linux/arm64 \
+          -f $(Build.SourcesDirectory)/backend/auth-service/Dockerfile \
+          -t $(acrLoginServer)/banking-app-auth-service:$(imageTag) \
+          --push \
+          $(Build.SourcesDirectory)/backend/auth-service
+      displayName: 'Build and Push Auth Service (multi-arch)'
+
+
+        # Dockerfile: '$(Build.SourcesDirectory)/backend/auth-service/Dockerfile'
+        # buildContext: '$(Build.SourcesDirectory)/backend/auth-service'
+        # tags: |
+        #   $(imageTag)
 
 
     # --------------------------------------------------------
@@ -174,11 +191,21 @@ stages:
         containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-gateway'
         command: 'buildAndPush'
-        Dockerfile: '$(Build.SourcesDirectory)/backend/gateway/Dockerfile'
-        buildContext: '$(Build.SourcesDirectory)/backend/gateway'
-        tags: |
-          $(imageTag)
 
+    - script: |
+        set -e
+        docker buildx create --use --name multiarch-builder || docker buildx use multiarch-builder
+        docker buildx build --platform linux/amd64,linux/arm64 \
+          -f $(Build.SourcesDirectory)/backend/gateway/Dockerfile \
+          -t $(acrLoginServer)/banking-app-gateway:$(imageTag) \
+          --push \
+          $(Build.SourcesDirectory)/backend/gateway
+      displayName: 'Build and Push Gateway (multi-arch)'
+
+        # Dockerfile: '$(Build.SourcesDirectory)/backend/gateway/Dockerfile'
+        # buildContext: '$(Build.SourcesDirectory)/backend/gateway'
+        # tags: |
+        #   $(imageTag)
 
     # --------------------------------------------------------
     # Offers
@@ -190,10 +217,21 @@ stages:
         containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-offers-service'
         command: 'buildAndPush'
-        Dockerfile: '$(Build.SourcesDirectory)/backend/offers-service/Dockerfile'
-        buildContext: '$(Build.SourcesDirectory)/backend/offers-service'
-        tags: |
-          $(imageTag)
+
+    - script: |
+        set -e
+        docker buildx create --use --name multiarch-builder || docker buildx use multiarch-builder
+        docker buildx build --platform linux/amd64,linux/arm64 \
+          -f $(Build.SourcesDirectory)/backend/offers-service/Dockerfile \
+          -t $(acrLoginServer)/banking-app-offers-service:$(imageTag) \
+          --push \
+          $(Build.SourcesDirectory)/backend/offers-service
+      displayName: 'Build and Push Offers Service (multi-arch)'
+
+        # Dockerfile: '$(Build.SourcesDirectory)/backend/offers-service/Dockerfile'
+        # buildContext: '$(Build.SourcesDirectory)/backend/offers-service'
+        # tags: |
+        #   $(imageTag)
 
 
     # --------------------------------------------------------
@@ -206,10 +244,21 @@ stages:
         containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-services-service'
         command: 'buildAndPush'
-        Dockerfile: '$(Build.SourcesDirectory)/backend/services-service/Dockerfile'
-        buildContext: '$(Build.SourcesDirectory)/backend/services-service'
-        tags: |
-          $(imageTag)
+
+    - script: |
+        set -e
+        docker buildx create --use --name multiarch-builder || docker buildx use multiarch-builder
+        docker buildx build --platform linux/amd64,linux/arm64 \
+          -f $(Build.SourcesDirectory)/backend/services-service/Dockerfile \
+          -t $(acrLoginServer)/banking-app-services-service:$(imageTag) \
+          --push \
+          $(Build.SourcesDirectory)/backend/services-service
+      displayName: 'Build and Push Services Service (multi-arch)'
+
+        # Dockerfile: '$(Build.SourcesDirectory)/backend/services-service/Dockerfile'
+        # buildContext: '$(Build.SourcesDirectory)/backend/services-service'
+        # tags: |
+        #   $(imageTag)
 
 
     # --------------------------------------------------------
@@ -222,10 +271,22 @@ stages:
         containerRegistry: '$(dockerRegistryServiceConnection)'
         repository: 'banking-app-frontend'
         command: 'buildAndPush'
-        Dockerfile: '$(Build.SourcesDirectory)/frontend/Dockerfile'
-        buildContext: '$(Build.SourcesDirectory)/frontend'
-        tags: |
-          $(imageTag)
+
+    - script: |
+        set -e
+        docker buildx create --use --name multiarch-builder || docker buildx use multiarch-builder
+        docker buildx build --platform linux/amd64,linux/arm64 \
+          -f $(Build.SourcesDirectory)/frontend/Dockerfile \
+          -t $(acrLoginServer)/banking-app-frontend:$(imageTag) \
+          --push \
+          $(Build.SourcesDirectory)/frontend
+      displayName: 'Build and Push Frontend (multi-arch)'
+      
+      
+        # Dockerfile: '$(Build.SourcesDirectory)/frontend/Dockerfile'
+        # buildContext: '$(Build.SourcesDirectory)/frontend'
+        # tags: |
+        #   $(imageTag)
 
 
 # ============================================================
@@ -280,7 +341,8 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-
+                set -e
+                
                 az aks get-credentials \
                   --resource-group "$(aksResourceGroup)" \
                   --name "$(aksClusterName)" \
@@ -319,7 +381,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-
+                set -e
                 echo "Applying Kubernetes resources..."
 
                 kubectl apply \
@@ -366,6 +428,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                set -e
 
                 echo "Deploying IMAGE TAG:"
                 echo "$(imageTag)"
@@ -375,7 +438,7 @@ stages:
                   -n "$(kubernetesNamespace)"
 
                 kubectl set image deployment/gateway-deployment \
-                  gateway=$(acrLoginServer)/banking-app-api-gateway:$(imageTag) \
+                  gateway=$(acrLoginServer)/banking-app-gateway:$(imageTag) \
                   -n "$(kubernetesNamespace)"
 
                 kubectl set image deployment/auth-deployment \
@@ -402,6 +465,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
+                set -e
 
                 kubectl rollout status \
                   deployment/frontend-deployment \
