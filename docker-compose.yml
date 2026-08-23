@@ -3,11 +3,16 @@ services:
   mongodb:
     image: mongo:8.0
     container_name: mongodb
-    command: mongod --quiet --nobrowser --wiredTigerCacheSizeGB 0.25
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -24,7 +29,9 @@ services:
     env_file:
       - ./backend/auth-service/.env
     depends_on:
-      - mongodb
+      mongodb: 
+        condition: service_healthy
+        
     restart: unless-stopped
 
   gateway:
