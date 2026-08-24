@@ -23,7 +23,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ service: 'services-service', status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.get("/metrics/service", async(req, res) => {
+app.get("/metrics/services-service", async(req, res) => {
   res.set("Content-Type", client.register.contentType);
   res.end(await client.register.metrics());
 })
