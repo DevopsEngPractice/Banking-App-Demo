@@ -355,10 +355,10 @@ stages:
 
                 kubectl get nodes
 
-                  - task: HelmInstaller@1
-                displayName: 'Install Helm'
-                inputs:
-                  helmVersionToInstall: 'latest'
+          - task: HelmInstaller@1
+            displayName: 'Install Helm'
+            inputs:
+              helmVersionToInstall: 'latest'
 
           - task: AzureCLI@2
             displayName: 'Deploy via Helm'
