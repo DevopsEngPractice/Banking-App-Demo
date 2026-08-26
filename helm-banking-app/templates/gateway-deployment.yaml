@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: gateway
+ 
+spec:
+  replicas: {{ .Values.gateway.replicaCount }}
+  revisionHistoryLimit: 3
+  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: gateway
+
+  template: 
+    metadata:
+      labels:
+        app: gateway
+
+    spec:
+      securityContext:
+        runAsNonRoot: {{ .Values.gateway.security.runAsNonRoot }}
+
+      restartPolicy: Always
+
+      containers:
+        - name: gateway
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.gateway.service.targetPort }}
+          env: 
+          - name: PORT
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: GATEWAY_PORT
+
+          - name: AUTH_SERVICE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: AUTH_SERVICE_URL
+
+          - name: OFFERS_SERVICE_URL
+            valueFrom:  
+              configMapKeyRef:
+                name: banking-app-config
+                key: OFFERS_SERVICE_URL
+
+          - name: SERVICES_SERVICE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: SERVICES_SERVICE_URL
+
+          - name: CLIENT_URL
+            valueFrom:
+              configMapKeyRef:
+                name: banking-app-config
+                key: CLIENT_URL
+
+          resources:
+             {{- toYaml .Values.gateway.resources | nindent 12 }}
+
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.gateway.probes.readiness.path }}
+              port: {{ .Values.gateway.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.gateway.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.gateway.probes.readiness.periodSeconds }}
+
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.gateway.probes.liveness.path }}
+              port: {{ .Values.gateway.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.gateway.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.gateway.probes.liveness.periodSeconds }}
+
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.gateway.security.allowPrivilegeEscalation }}
+            readOnlyRootFilesystem: {{ .Values.gateway.security.readOnlyRootFilesystem }}

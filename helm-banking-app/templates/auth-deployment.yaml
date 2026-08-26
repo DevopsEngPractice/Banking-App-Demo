@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: auth-deployment
+
+    #  {{ .Release.Namespace }} -->helm install banking-app .\helm-banking-app -n banking-app-dev
+
+  namespace: {{ .Values.namespace}}
+
+spec:
+  replicas: {{ .Values.authService.replicaCount}}
+  revisionHistoryLimit: 3
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: auth-deployment
+
+  template:
+    metadata:
+      labels:
+        app: auth-deployment
+
+    spec:
+      containers:
+        - name: auth-service
+
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.authService.image.repository }}:{{ .Values.authService.image.tag}}"
+
+          imagePullPolicy: {{ .Values.global.imagePullPolicy}}
+
+          ports:
+            - containerPort: {{ .Values.authService.service.targetPort}}
+
+          env:
+            - name: PORT
+              valueFrom:
+               configMapKeyRef:
+                 name: banking-app-config
+                 key: AUTH_PORT
+
+            
+            - name: AUTH_SERVICE_URL  
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: AUTH_SERVICE_URL
+
+            - name: CLIENT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: CLIENT_URL
+
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: AUTH_MONGO_URI
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: AUTH_JWT_SECRET
+
+          resources:
+            {{- toYaml .Values.authService.resources | nindent 12 }}
+
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.authService.probes.liveness.path}}
+              port: {{ .Values.authService.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.authService.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.authService.probes.liveness.periodSeconds }}
+
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.authService.probes.readiness.path }}
+              port: {{ .Values.authService.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.authService.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.authService.probes.readiness.periodSeconds }}

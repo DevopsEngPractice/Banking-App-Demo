@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: banking-app-config
+  namespace: {{ .Values.namespace }}
+
+data:
+  AUTH_PORT: {{ .Values.config.auth.port | quote }}
+  AUTH_SERVICE_URL: {{ .Values.config.auth.serviceUrl | quote }}
+
+  OFFERS_PORT: {{ .Values.config.offers.port | quote }}
+  OFFERS_SERVICE_URL: {{ .Values.config.offers.serviceUrl | quote }}
+
+  SERVICES_PORT: {{ .Values.config.services.port | quote }}
+  SERVICES_SERVICE_URL: {{ .Values.config.services.serviceUrl | quote }}
+
+  GATEWAY_PORT: {{ .Values.config.gateway.port | quote }}
+
+  CLIENT_URL: {{ .Values.config.frontend.clientUrl | quote }}

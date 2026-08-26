@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: offers-service-monitor
+  namespace: {{ .Values.namespace }}
+
+  labels:
+    release: prometheus
+
+spec:
+  selector:
+    matchLabels:
+      app: offers-service
+
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace }}
+
+  endpoints:
+    - port: offers-service
+      interval: 15s
+      path: /metrics/offers

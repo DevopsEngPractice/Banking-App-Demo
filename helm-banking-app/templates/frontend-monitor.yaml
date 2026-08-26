@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: frontend-monitor
+  namespace: {{ .Values.namespace }}
+
+  labels:
+    release: prometheus
+
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace }}
+
+  endpoints:
+    - port: frontend
+      interval: 15s
+      path: /metrics/frontend

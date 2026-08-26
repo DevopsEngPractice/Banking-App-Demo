@@ -333,7 +333,6 @@ stages:
               SecretsFilter: '*'
               RunAsPreJob: false
 
-
           # --------------------------------------------------
           # Get AKS credentials
           # --------------------------------------------------
@@ -356,7 +355,33 @@ stages:
 
                 kubectl get nodes
 
+                  - task: HelmInstaller@1
+                displayName: 'Install Helm'
+                inputs:
+                  helmVersionToInstall: 'latest'
 
+          - task: AzureCLI@2
+            displayName: 'Deploy via Helm'
+            inputs:
+              azureSubscription: '$(azureServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -e
+
+                echo "Deploying IMAGE TAG:"
+                echo "$(imageTag)"
+
+                helm upgrade --install banking-app ./helm-banking-app \
+                  --namespace "$(kubernetesNamespace)" \
+                  --create-namespace \
+                  --set auth.image.tag=$(imageTag) \
+                  --set frontend.image.tag=$(imageTag) \
+                  --set gateway.image.tag=$(imageTag) \
+                  --set offers.image.tag=$(imageTag) \
+                  --set services.image.tag=$(imageTag) \
+                  --wait --timeout 5m
+          
           # # --------------------------------------------------
           # # Create/update namespace
           # # --------------------------------------------------
@@ -378,123 +403,122 @@ stages:
           # Apply ConfigMap
           # --------------------------------------------------
 
-          - task: AzureCLI@2
-            displayName: 'Deploy Kubernetes Manifests'
-            inputs:
-              azureSubscription: '$(azureServiceConnection)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                set -e
-                echo "Applying Kubernetes resources..."
+          # - task: AzureCLI@2
+          #   displayName: 'Deploy Kubernetes Manifests'
+          #   inputs:
+          #     azureSubscription: '$(azureServiceConnection)'
+          #     scriptType: 'bash'
+          #     scriptLocation: 'inlineScript'
+          #     inlineScript: |
+          #       set -e
+          #       echo "Applying Kubernetes resources..."
 
-                kubectl apply \
-                  -f banking-app-k8s/namespace/ \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl apply \
+          #         -f banking-app-k8s/namespace/ \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl apply \
-                  -f banking-app-k8s/resource-quota/ \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl apply \
+          #         -f banking-app-k8s/resource-quota/ \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl apply \
-                  -f banking-app-k8s/configMap.yml \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl apply \
+          #         -f banking-app-k8s/configMap.yml \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl apply \
-                  -f banking-app-k8s/frontend/ \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl apply \
+          #         -f banking-app-k8s/frontend/ \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl apply \
-                  -f banking-app-k8s/gateway/ \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl apply \
+          #         -f banking-app-k8s/gateway/ \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl apply \
-                  -f banking-app-k8s/auth-service/ \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl apply \
+          #         -f banking-app-k8s/auth-service/ \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl apply \
-                  -f banking-app-k8s/offers-service/ \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl apply \
+          #         -f banking-app-k8s/offers-service/ \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl apply \
-                  -f banking-app-k8s/services-service/ \
-                  -n "$(kubernetesNamespace)"  
+          #       kubectl apply \
+          #         -f banking-app-k8s/services-service/ \
+          #         -n "$(kubernetesNamespace)"  
 
 
           # --------------------------------------------------
           # Update application images
           # --------------------------------------------------
 
-          - task: AzureCLI@2
-            displayName: 'Update AKS Images'
-            inputs:
-              azureSubscription: '$(azureServiceConnection)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                set -e
+          # - task: AzureCLI@2
+          #   displayName: 'Update AKS Images'
+          #   inputs:
+          #     azureSubscription: '$(azureServiceConnection)'
+          #     scriptType: 'bash'
+          #     scriptLocation: 'inlineScript'
+          #     inlineScript: |
+          #       set -e
 
-                echo "Deploying IMAGE TAG:"
-                echo "$(imageTag)"
+          #       echo "Deploying IMAGE TAG:"
+          #       echo "$(imageTag)"
 
-                kubectl set image deployment/frontend-deployment \
-                  frontend=$(acrLoginServer)/banking-app-frontend:$(imageTag) \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl set image deployment/frontend-deployment \
+          #         frontend=$(acrLoginServer)/banking-app-frontend:$(imageTag) \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl set image deployment/gateway-deployment \
-                  gateway=$(acrLoginServer)/banking-app-gateway:$(imageTag) \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl set image deployment/gateway-deployment \
+          #         gateway=$(acrLoginServer)/banking-app-gateway:$(imageTag) \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl set image deployment/auth-deployment \
-                  auth-service=$(acrLoginServer)/banking-app-auth-service:$(imageTag) \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl set image deployment/auth-deployment \
+          #         auth-service=$(acrLoginServer)/banking-app-auth-service:$(imageTag) \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl set image deployment/offers-deployment \
-                  offers-service=$(acrLoginServer)/banking-app-offers-service:$(imageTag) \
-                  -n "$(kubernetesNamespace)"
+          #       kubectl set image deployment/offers-deployment \
+          #         offers-service=$(acrLoginServer)/banking-app-offers-service:$(imageTag) \
+          #         -n "$(kubernetesNamespace)"
 
-                kubectl set image deployment/services-deployment \
-                  services-service=$(acrLoginServer)/banking-app-services-service:$(imageTag) \
-                  -n "$(kubernetesNamespace)"
-
+          #       kubectl set image deployment/services-deployment \
+          #         services-service=$(acrLoginServer)/banking-app-services-service:$(imageTag) \
+          #         -n "$(kubernetesNamespace)"
 
           # --------------------------------------------------
           # Wait for rollout
           # --------------------------------------------------
 
-          - task: AzureCLI@2
-            displayName: 'Wait for AKS Rollout'
-            inputs:
-              azureSubscription: '$(azureServiceConnection)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                set -e
+          # - task: AzureCLI@2
+          #   displayName: 'Wait for AKS Rollout'
+          #   inputs:
+          #     azureSubscription: '$(azureServiceConnection)'
+          #     scriptType: 'bash'
+          #     scriptLocation: 'inlineScript'
+          #     inlineScript: |
+          #       set -e
 
-                kubectl rollout status \
-                  deployment/frontend-deployment \
-                  -n "$(kubernetesNamespace)" \
-                  --timeout=180s
+          #       kubectl rollout status \
+          #         deployment/frontend-deployment \
+          #         -n "$(kubernetesNamespace)" \
+          #         --timeout=180s
 
-                kubectl rollout status \
-                  deployment/gateway-deployment \
-                  -n "$(kubernetesNamespace)" \
-                  --timeout=180s
+          #       kubectl rollout status \
+          #         deployment/gateway-deployment \
+          #         -n "$(kubernetesNamespace)" \
+          #         --timeout=180s
 
-                kubectl rollout status \
-                  deployment/auth-deployment \
-                  -n "$(kubernetesNamespace)" \
-                  --timeout=180s
+          #       kubectl rollout status \
+          #         deployment/auth-deployment \
+          #         -n "$(kubernetesNamespace)" \
+          #         --timeout=180s
 
-                kubectl rollout status \
-                  deployment/offers-deployment \
-                  -n "$(kubernetesNamespace)" \
-                  --timeout=180s
+          #       kubectl rollout status \
+          #         deployment/offers-deployment \
+          #         -n "$(kubernetesNamespace)" \
+          #         --timeout=180s
 
-                kubectl rollout status \
-                  deployment/services-deployment \
-                  -n "$(kubernetesNamespace)" \
-                  --timeout=180s
+          #       kubectl rollout status \
+          #         deployment/services-deployment \
+          #         -n "$(kubernetesNamespace)" \
+          #         --timeout=180s
 
 
           # --------------------------------------------------

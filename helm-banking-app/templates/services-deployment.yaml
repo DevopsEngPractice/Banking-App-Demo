@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: services-deployment
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: {{ .Values.servicesService.replicaCount }}
+
+  revisionHistoryLimit: 3
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: services-dep
+
+  template:
+    metadata:
+      labels:
+        app: services-dep
+
+    spec:
+      containers:
+        - name: services-service
+
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.servicesService.image.repository }}:{{ .Values.servicesService.image.tag }}"
+
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.servicesService.service.targetPort }}
+
+          env:
+
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: SERVICES_PORT
+
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: SERVICES_MONGO_URI
+
+          resources:
+            {{- toYaml .Values.servicesService.resources | nindent 12 }}
+
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.servicesService.probes.liveness.path }}
+              port: {{ .Values.servicesService.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.servicesService.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.servicesService.probes.liveness.periodSeconds }}
+
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.servicesService.probes.readiness.path }}
+              port: {{ .Values.servicesService.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.servicesService.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.servicesService.probes.readiness.periodSeconds }}

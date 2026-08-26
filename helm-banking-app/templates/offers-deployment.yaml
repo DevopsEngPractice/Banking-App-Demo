@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: offers-deployment
+  namespace: {{ .Values.namespace }}
+
+spec:
+  replicas: {{ .Values.offersService.replicaCount }}
+
+  revisionHistoryLimit: 3
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels:
+      app: offers-service
+
+  template:
+    metadata:
+      labels:
+        app: offers-service
+
+    spec:
+      containers:
+        - name: offers-service
+
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.offersService.image.repository }}:{{ .Values.offersService.image.tag }}"
+
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.offersService.service.targetPort }}
+
+          env:
+
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: banking-app-config
+                  key: OFFERS_PORT
+
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: banking-app-secrets
+                  key: OFFERS_MONGO_URI
+
+          resources:
+            {{- toYaml .Values.offersService.resources | nindent 12 }}
+
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.offersService.probes.liveness.path }}
+              port: {{ .Values.offersService.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.offersService.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.offersService.probes.liveness.periodSeconds }}
+
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.offersService.probes.readiness.path }}
+              port: {{ .Values.offersService.service.targetPort }}
+
+            initialDelaySeconds: {{ .Values.offersService.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.offersService.probes.readiness.periodSeconds }}
