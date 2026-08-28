@@ -1,3 +1,5 @@
+{{- if .Values.monitoring.enabled }}
+
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -16,3 +18,5 @@ spec:
     - port: auth-service # Matches the name of the port in your Kubernetes Service
       interval: 15s # How frequently Prometheus scrapes metrics
       path: /metrics/auth # The endpoint path we exposed in Step 1
+
+{{- end }}      
