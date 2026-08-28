@@ -8,11 +8,11 @@ metadata:
 spec:
   selector:
     app: mongodb
+  
+  clusterIP: None
 
   ports:
     - name: mongodb
       protocol: TCP
       port: {{ .Values.mongodb.service.port }}
       targetPort: {{ .Values.mongodb.service.targetPort }}
-
-  type: {{ .Values.mongodb.service.type }}

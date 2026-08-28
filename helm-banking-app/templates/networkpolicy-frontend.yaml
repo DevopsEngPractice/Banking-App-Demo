@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: frontend-network-policy
+  namespace: {{ .Values.namespace }}
+
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: gateway
+
+      ports:
+        - protocol: TCP
+          port: {{ .Values.gateway.service.targetPort }}

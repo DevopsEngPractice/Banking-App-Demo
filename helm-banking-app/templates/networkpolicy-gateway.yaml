@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: gateway-network-policy
+  namespace: {{ .Values.namespace }}
+
+spec:
+  podSelector:
+    matchLabels:
+      app: gateway
+
+  policyTypes:
+    - Egress
+
+  egress:
+
+    - to:
+        - podSelector:
+            matchLabels:
+              app: auth-deployment
+
+      ports:
+        - protocol: TCP
+          port: {{ .Values.authService.service.targetPort }}
+
+    - to:
+        - podSelector:
+            matchLabels:
+              app: offers-service
+
+      ports:
+        - protocol: TCP
+          port: {{ .Values.offersService.service.targetPort }}
+
+    - to:
+        - podSelector:
+            matchLabels:
+              app: services-dep
+
+      ports:
+        - protocol: TCP
+          port: {{ .Values.servicesService.service.targetPort }}

@@ -1,0 +1,24 @@
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'auth-service'
+    metrics_path: /metrics/auth
+    static_configs:
+      - targets: ['auth-service:5001']
+
+  - job_name: 'gateway'
+    metrics_path: /metrics/gateway
+    static_configs:
+      - targets: ['gateway:5000']
+
+  - job_name: 'offers-service'
+    metrics_path: /metrics/offers
+    static_configs:
+      - targets: ['offers-service:5002']
+
+  - job_name: 'services-service'
+    metrics_path: /metrics/services-service
+    static_configs:
+      - targets: ['services-service:5003']

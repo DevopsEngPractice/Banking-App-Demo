@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: {{ .Values.namespace }}
+
+spec:
+  serviceName: mongodb-service
+  replicas: {{ .Values.mongodb.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: mongodb
+
+  template:
+    metadata:
+      labels:
+        app: mongodb
+
+    spec:
+      containers:
+        - name: mongodb
+
+          image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
+
+          ports:
+            - name: mongodb
+              containerPort: {{ .Values.mongodb.service.targetPort }}
+
+          resources:
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
+
+          volumeMounts:
+            - name: mongodb-storage
+              mountPath: /data/db
+
+      volumes:
+        - name: mongodb-storage
+          persistentVolumeClaim:
+            claimName: mongodb-pvc
